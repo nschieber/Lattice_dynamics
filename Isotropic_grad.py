@@ -25,7 +25,7 @@ parser.add_option('-p', dest = 'ply', help = 'polymorph characteristic')
 parser.add_option('-P', dest = 'prs', help = 'Pressure of the system in atm', default = 1)
 parser.add_option('-T', dest = 'temp', help = '.npy file containing desired temperature points', default = False)
 parser.add_option('-R', dest = 'RK', help ='Runge-Kuta step size in [K]',default =150.)
-
+parser.add_option('-r', dest = 'rev', help='Input -1 to go in reverse from 300K', default=0)
 
 (options, args) = parser.parse_args()
 fil = options.fil
@@ -35,12 +35,16 @@ ply = int(options.ply)
 prs = float(options.prs)
 temp = options.temp
 RK = float(options.RK)
+rev = int(options.rev)
 
 
 ###Temperature range
 T_ex = np.arange(RK,301,RK)
 T_ex = np.insert(T_ex,0,0.1)
-
+if rev == -1:
+  print "Performing gradient search in reverse from 300K point"
+  T_ex = T_ex[::-1]
+  print T_ex
 
 print "Searching for expanded and compressed structure"
 #Seeing if a directory is made to save expanded strucutres
@@ -49,10 +53,13 @@ if os.path.isdir('cords') != True:
 if os.path.isdir('wave') != True:
   os.system('mkdir wave')
 
-Dv = np.zeros(len(T_ex)-1)
-
 os.system('cp %s temp.xyz'%(fil))
 path = 'R%s-%s'%(RK,max(T_ex))
+
+Dv = np.zeros(len(T_ex)-1)
+if os.path.isfile('dV_p%s_%s.npy'%(ply,path)) == True:
+  print "Using dV/dT data from previous run"
+  Dv = np.load('dV_p%s_%s.npy'%(ply,path))
 
 proper = np.zeros((len(T_ex),13,2))
   #Quantum in column 0
@@ -64,28 +71,35 @@ proper = np.zeros((len(T_ex),13,2))
 for i in range(len(T_ex)):
   PV = prop.PV('temp.xyz',prs)
   if T_ex[i] != T_ex[-1]:
-    K = np.zeros(4)
-    h = T_ex[i+1] - T_ex[i]
-    t = np.array([0,h/2,h/2,h]).astype(float)
-    for j in range(len(K)):
-      RK_i = (((K[j-1]*t[j] + PV[0])/PV[0])**(1/3.) - 1.)*PV[2]
-      Qs.expand('temp.xyz',key,RK_i[0],RK_i[1],RK_i[2],0.0,0.0,0.0,nmol,ply)
-      RK_cord = 'RK_temp.xyz'
-      os.system('mv p%s_temp.xyz %s'%(ply,RK_cord))
-      os.system('cp %s p%s_%s_T%s.xyz'%(RK_cord,ply,path+'_k%s-%s'%(j+1,T_ex[i]),T_ex[i]+t[j]))
-      K[j] = Qs.iso_grad(RK_cord,key,prs,ply,nmol,T_ex[i]+t[j],path+'_k%s-%s'%(j+1,T_ex[i]))
-      
-      files = [f for f in os.listdir('./') if f.startswith("p%s_%s"%(ply,path+'_k%s-%s'%(j+1,T_ex[i])))]
-      wiles = [f for f in os.listdir('./') if f.startswith("iso_p%s_%s"%(ply,path+'_k%s-%s'%(j+1,T_ex[i])))]
-      for k in range(len(files)):
-        os.system('rm %s'%(files[k]))
-        os.system('rm %s' %(wiles[k]))
-  
-    Dv[i] = np.sum(np.multiply(K,np.array([1./6,1./3,1./3,1./6])))
-    np.save('dV_p%s_%s'%(ply,path),Dv)
-  os.system('cp temp.xyz cords/p%s_%s_T%s.xyz'%(ply,path,T_ex[i]))
-  wvn = prop.eig_wvn('temp.xyz',key)[1]
-  np.save('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]),wvn)
+    if Dv[i] == 0.0:
+      K = np.zeros(4)
+      h = T_ex[i+1] - T_ex[i]
+      t = np.array([0,h/2,h/2,h]).astype(float)
+      for j in range(len(K)):
+        RK_i = (((K[j-1]*t[j] + PV[0])/PV[0])**(1/3.) - 1.)*PV[2]
+        Qs.expand('temp.xyz',key,RK_i[0],RK_i[1],RK_i[2],0.0,0.0,0.0,nmol,ply)
+        RK_cord = 'RK_temp.xyz'
+        os.system('mv p%s_temp.xyz %s'%(ply,RK_cord))
+        os.system('cp %s p%s_%s_T%s.xyz'%(RK_cord,ply,path+'_k%s-%s'%(j+1,T_ex[i]),T_ex[i]+t[j]))
+        K[j] = Qs.iso_grad(RK_cord,key,prs,ply,nmol,T_ex[i]+t[j],path+'_k%s-%s'%(j+1,T_ex[i]))
+        
+        files = [f for f in os.listdir('./') if f.startswith("p%s_%s"%(ply,path+'_k%s-%s'%(j+1,T_ex[i])))]
+        wiles = [f for f in os.listdir('./') if f.startswith("iso_p%s_%s"%(ply,path+'_k%s-%s'%(j+1,T_ex[i])))]
+        for k in range(len(files)):
+          os.system('rm %s'%(files[k]))
+          os.system('rm %s' %(wiles[k]))
+    
+      Dv[i] = np.sum(np.multiply(K,np.array([1./6,1./3,1./3,1./6])))
+      np.save('dV_p%s_%s'%(ply,path),Dv)
+      wvn = prop.eig_wvn('temp.xyz',key)[1]
+      np.save('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]),wvn)
+
+    else:
+      if os.path.isfile('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i])) == True:
+        wvn = np.load('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]))
+      else:
+        wvn = prop.eig_wvn('temp.xyz',key)[1]
+        np.save('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]),wvn)
 
   if any(wvn < -1.0) == True:
     proper[:,:,:] = np.nan
@@ -102,10 +116,15 @@ for i in range(len(T_ex)):
     proper[i,7:,0] = PV[2]
     proper[i,7:,1] = PV[2]
 
+  os.system('cp temp.xyz cords/p%s_%s_T%s.xyz'%(ply,path,T_ex[i]))
+
   if T_ex[i] != T_ex[-1]:
-    i_T = (((Dv[i]*(T_ex[i+1]-T_ex[i]) + PV[0])/PV[0])**(1/3.) - 1.)*PV[2]
-    Qs.expand('temp.xyz',key,i_T[0],i_T[1],i_T[2],0.0,0.0,0.0,nmol,ply)
-    os.system('mv p%s_temp.xyz temp.xyz'%(ply))
+    if os.path.isfile('cords/p%s_%s_T%s.xyz'%(ply,path,T_ex[i+1])) != True:
+      i_T = (((Dv[i]*(T_ex[i+1]-T_ex[i]) + PV[0])/PV[0])**(1/3.) - 1.)*PV[2]
+      Qs.expand('temp.xyz',key,i_T[0],i_T[1],i_T[2],0.0,0.0,0.0,nmol,ply)
+      os.system('mv p%s_temp.xyz temp.xyz'%(ply))
+    else:
+      os.system('cp cords/p%s_%s_T%s.xyz ./temp.xyz'%(ply,path,T_ex[i+1]))
 
 os.system('rm RK_temp.xyz temp.xyz')
 
