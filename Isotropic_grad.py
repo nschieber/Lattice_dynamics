@@ -39,7 +39,7 @@ rev = int(options.rev)
 
 
 ###Temperature range
-T_ex = np.arange(RK,301,RK)
+T_ex = np.arange(RK,26,RK)
 T_ex = np.insert(T_ex,0,0.1)
 if rev == -1:
   print "Performing gradient search in reverse from 300K point"
@@ -75,14 +75,19 @@ for i in range(len(T_ex)):
       K = np.zeros(4)
       h = T_ex[i+1] - T_ex[i]
       t = np.array([0,h/2,h/2,h]).astype(float)
+      RK_cord = 'RK_temp.xyz'
       for j in range(len(K)):
-        RK_i = (((K[j-1]*t[j] + PV[0])/PV[0])**(1/3.) - 1.)*PV[2]
-        Qs.expand('temp.xyz',key,RK_i[0],RK_i[1],RK_i[2],0.0,0.0,0.0,nmol,ply)
-        RK_cord = 'RK_temp.xyz'
-        os.system('mv p%s_temp.xyz %s'%(ply,RK_cord))
+        if j != 0:
+          RK_i = (((K[j-1]*t[j] + PV[0])/PV[0])**(1/3.) - 1.)*PV[2]
+          Qs.expand('temp.xyz',key,RK_i[0],RK_i[1],RK_i[2],0.0,0.0,0.0,nmol,ply)
+          os.system('mv p%s_temp.xyz %s'%(ply,RK_cord))
+        else:
+          os.system('cp temp.xyz %s'%(RK_cord))
         os.system('cp %s p%s_%s_T%s.xyz'%(RK_cord,ply,path+'_k%s-%s'%(j+1,T_ex[i]),T_ex[i]+t[j]))
         K[j] = Qs.iso_grad(RK_cord,key,prs,ply,nmol,T_ex[i]+t[j],path+'_k%s-%s'%(j+1,T_ex[i]))
-        
+
+        if j == 0:
+          os.system('cp iso_p%s_%s.npy wave/iso_p%s_%s_T%s.npy'%(ply,path+'_k%s-%s_T%s'%(j+1,T_ex[i],T_ex[i]+t[j]),ply,path,T_ex[i]))        
         files = [f for f in os.listdir('./') if f.startswith("p%s_%s"%(ply,path+'_k%s-%s'%(j+1,T_ex[i])))]
         wiles = [f for f in os.listdir('./') if f.startswith("iso_p%s_%s"%(ply,path+'_k%s-%s'%(j+1,T_ex[i])))]
         for k in range(len(files)):
@@ -91,15 +96,9 @@ for i in range(len(T_ex)):
     
       Dv[i] = np.sum(np.multiply(K,np.array([1./6,1./3,1./3,1./6])))
       np.save('dV_p%s_%s'%(ply,path),Dv)
-      wvn = prop.eig_wvn('temp.xyz',key)[1]
-      np.save('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]),wvn)
-
-    else:
-      if os.path.isfile('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i])) == True:
-        wvn = np.load('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]))
-      else:
-        wvn = prop.eig_wvn('temp.xyz',key)[1]
-        np.save('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]),wvn)
+  else:
+    np.save('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]),prop.eig_wvn('temp.xyz',key)[1])
+  wvn = np.load('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]))
 
   if any(wvn < -1.0) == True:
     proper[:,:,:] = np.nan
