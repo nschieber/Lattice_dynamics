@@ -39,7 +39,7 @@ rev = int(options.rev)
 
 
 ###Temperature range
-T_ex = np.arange(RK,26,RK)
+T_ex = np.arange(RK,301,RK)
 T_ex = np.insert(T_ex,0,0.1)
 if rev == -1:
   print "Performing gradient search in reverse from 300K point"
