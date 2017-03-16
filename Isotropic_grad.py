@@ -49,8 +49,10 @@ if rev == -1:
 print "Searching for expanded and compressed structure"
 #Seeing if a directory is made to save expanded strucutres
 if os.path.isdir('cords') != True:
+  print "   Creating directory to save coordinates in"
   os.system('mkdir cords')
 if os.path.isdir('wave') != True:
+  print "   Creating directory to save wavenumbers in"
   os.system('mkdir wave')
 
 os.system('cp %s temp.xyz'%(fil))
@@ -96,12 +98,14 @@ for i in range(len(T_ex)):
     
       Dv[i] = np.sum(np.multiply(K,np.array([1./6,1./3,1./3,1./6])))
       np.save('dV_p%s_%s'%(ply,path),Dv)
-  else:
+  if os.path.isfile('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i])) != True:
     np.save('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]),prop.eig_wvn('temp.xyz',key)[1])
   wvn = np.load('wave/iso_p%s_%s_T%s.npy'%(ply,path,T_ex[i]))
+  print "T=%sK  |  Wavenumbers= %s; %s; %s ..."%(T_ex[i],wvn[0],wvn[1],wvn[2])
 
   if any(wvn < -1.0) == True:
-    proper[:,:,:] = np.nan
+    proper[i,:,:] = np.nan
+    print "...Thermal properties have been bypassed."
   else:
     proper[:,0,:] = prop.lat_ener('temp.xyz',key)/nmol
     if T_ex[i] != 0:
@@ -143,4 +147,4 @@ np.save('Vc_Iso_Grd_%s'%(path),proper[:,6,1])
 #np.save('LATc_Iso_Grd_%s_%s'%(ply,nmol),proper[:,7:,1])
 np.save('T_Iso_Grd_%s'%(path),T_ex)
 
-print "Done"
+print "Done!"

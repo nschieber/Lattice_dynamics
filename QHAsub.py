@@ -130,7 +130,7 @@ def expand(fil,key,a,b,c,alp,bet,gam,nmol,ply):
     with open('dummy.xyz', 'w') as file:
         file.writelines(dummy)
     
-    os.system("crystal dummy.xyz -k %s 2" %(key))
+    os.system("crystal dummy.xyz -k %s 2 &> /dev/null" %(key))
 
     with open('dummy.frac','r') as frac:
             dummy_f = frac.readlines()
@@ -139,7 +139,7 @@ def expand(fil,key,a,b,c,alp,bet,gam,nmol,ply):
     with open('dummy.frac_temp','w') as file:
         file.writelines(dummy_f)
 
-    os.system("crystal dummy.frac_temp -k %s 1" %(key))
+    os.system("crystal dummy.frac_temp -k %s 1 &> /dev/null" %(key))
     
     with open('dummy.xyz_2') as f:
       dummy = np.array(list(it.izip_longest(*[lines.split() for lines in f], fillvalue=' '))).T
@@ -160,7 +160,7 @@ def expand(fil,key,a,b,c,alp,bet,gam,nmol,ply):
 
     with open('%s_2'%(fil),'w') as fil_out:
         fil_out.writelines(outfile)
-    os.system('minimize %s_2 -k %s 0.01' %(fil, key))
+    os.system('minimize %s_2 -k %s 0.01 &> /dev/null' %(fil, key))
     os.system('mv %s_3 p%s_temp.xyz'%(fil,ply))
     os.system('rm dummy.frac_temp dummy.xyz_2 dummy.frac dummy.xyz %s_2' %(fil))
 
