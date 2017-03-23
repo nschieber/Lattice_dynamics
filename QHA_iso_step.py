@@ -24,7 +24,7 @@ parser.add_option('-n', dest = 'nmol', help = 'number of molecules in .xyz file'
 parser.add_option('-p', dest = 'ply', help = 'polymorph characteristic')
        #Optional inputs#
 parser.add_option('-P', dest = 'prs', help = 'Pressure of the system in atm', default = 1)
-parser.add_option('-T', dest = 'temp', help = '.npy file containing desired temperature points', default = False)
+parser.add_option('-T', dest = 'temp', help = 'Temperature points as .npy file, array x,x,x , or stepXmax', default = False)
 
 (options, args) = parser.parse_args()
 fil = options.fil
@@ -36,10 +36,19 @@ temp = options.temp
 
 ###Temperature range
 if temp == False:
-  T = np.arange(5,301.,5)
+  T = np.arange(25,301.,25)
   T = np.insert(T,0,0.1)
+elif os.path.isfile(temp) == True:
+  T = np.load(temp).astype(float)
+elif len(temp.split(',')) >= 2:
+  T = np.array(temp.split(',')).astype(float)
+elif len(temp.split('X')) == 2:
+  temp = np.array(temp.split('X')).astype(float)
+  T = np.arange(0,temp[1],temp[0])
 else:
-  T = np.load(temp)
+  print "Not an appropriate temperature input"
+  sys.exit()
+
 
 ###Creating expanded and compressed structures
 Vec_s = 0.0005
@@ -129,3 +138,4 @@ np.save('GcQHA_%s_%s'%(ply,nmol),proper[:,3,1])
 np.save('VcQHA_%s_%s'%(ply,nmol),proper[:,6,1])
 np.save('T_QHA',T)
 #np.save('Time_iQHA_%s'%(ply),end-start)
+
