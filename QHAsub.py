@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import itertools as it
 import properties as prop
+np.set_printoptions(suppress=True)
 #######################################################################################################
 #######################################################################################################
 def iso_expand(fil,key,vec_n,vec_o,nmol,ply):
@@ -222,11 +223,12 @@ def vol_gradient (fil_0,wvn_0,fil_1,wvn_1,fil_2,wvn_2,key,T_0,dT,P,nmol):
 #######################################################################################################
 
 def aniso_grad (fil,key,P,ply,nmol,T_0,path):
-    dT = 0.1
-    Dl = prop.PV(fil,P)[2]*0.00005
-    Dl[3:] = 0.0001
+    dT = 0.01
+    Dl = prop.PV(fil,P)[2]*0.001
+    Dl[3:] = 0.001
     mark = ['a','b','c','alp','bet','gam']
     wvn_1 = prop.eig_wvn(fil,key)[1]
+    np.save('aniso_p%s_%s.npy'%(ply,path),wvn_1)
 
     da = np.zeros((1,6))[0]
     for i in range(6):
@@ -244,6 +246,7 @@ def aniso_grad (fil,key,P,ply,nmol,T_0,path):
       os.system('mv p%s_temp.xyz %s'%(ply,fil_0))
 
       da[i] = vec_gradient(fil_0,wvn_0,fil,wvn_1,fil_2,wvn_2,key,T_0,dT,P,nmol,i)
+      os.system('rm %s %s'%(fil_2,fil_0))
     return da
 
 #######################################################################################################
@@ -292,3 +295,139 @@ def iso_grad_gru (fil,key,P,ply,nmol,T_0,path,gru,wvn_ref,V_ref):
     dV = vol_gradient(fil_0,wvn_0,fil,wvn_1,fil_2,wvn_2,key,T_0,dT,P,nmol)
     return dV
 
+
+
+#######################################################################################################
+#######################################################################################################
+def crystal_mat(a,b,c,alpha,beta,gamma):
+    Vxx = a
+    Vxy = b*np.cos(np.radians(gamma))
+    Vxz = c*np.cos(np.radians(beta))
+    Vyy = b*np.sin(np.radians(gamma))
+    Vyz = c*np.cos(np.radians(alpha))*np.sin(np.radians(gamma))
+    Vzz = np.sqrt(c**2 - Vxz**2 - Vyz**2)
+    lat_mat = np.matrix([[Vxx,Vxy,Vxz],[0.,Vyy,Vyz],[0.,0.,Vzz]])
+    return lat_mat
+
+#######################################################################################################
+#######################################################################################################
+def mat_expand(fil,key,xx,yy,zz,xy,xz,yz,nmol):
+    strn = np.matrix([[xx,xy,xz],[0.,yy,yz],[0.,0.,zz]]) #Putting stresses into matrix form
+    with open(fil) as f:
+      #opening xyz coordinate file to expand
+      afile = np.array(list(it.izip_longest(*[lines.split() for lines in f], fillvalue=' '))).T
+    cords = afile[2:,2:5].astype(float)
+    lat_vec = afile[1,:6].astype(float)
+
+    lat_mat = crystal_mat(lat_vec[0],lat_vec[1],lat_vec[2],lat_vec[3],lat_vec[4],lat_vec[5]) #Converting lattice parameters to crystal matrix form
+
+    #Extracting center of mass cordinates
+    COM_cords = np.zeros((nmol,3))
+    atom = len(cords[:,0])/nmol
+    for i in range(nmol):
+      COM_cords[i,:] = np.mean(cords[i*atom:(i+1)*atom],axis=0)
+      cords[i*atom:(i+1)*atom] = np.subtract(cords[i*atom:(i+1)*atom],COM_cords[i,:])
+    COM_cords = np.dot(np.linalg.inv(lat_mat),COM_cords.T).T #Converting center of mass coordinates to fractional coordinates
+    lat_mat = lat_mat + strn #Adding a particular strain to the matrix
+    COM_cords = np.dot(lat_mat,COM_cords.T).T #Converting back to Cartesian coordinates
+   
+    #adjusting entire molecules to changes in expansion due to their center of mass
+    for i in range(nmol):
+      cords[i*atom:(i+1)*atom] = np.subtract(cords[i*atom:(i+1)*atom],-1*COM_cords[i,:])
+    afile[2:,2:5] = np.around(cords,decimals=8).astype('str')
+
+    a = np.absolute(lat_mat[0,0])
+    c = np.absolute(np.sqrt(lat_mat[2,2]**2 - lat_mat[0,2]**2 - lat_mat[1,2]**2))
+    beta = np.degrees(np.arccos(lat_mat[0,2]/float(c)))
+    alpha = np.degrees(np.arccos(lat_mat[1,2]/(c*np.sin(np.radians(beta)))))
+    gamma = np.degrees(np.arctan(lat_mat[1,1]/lat_mat[0,1]))
+    b = np.absolute(lat_mat[0,1]/np.cos(np.radians(gamma)))
+    #Adjusting lattice vectors if they are negative
+    if alpha < 0.0:
+      alpha = 180. + alpha
+    if beta < 0.0:
+      beta = 180. + beta
+    if gamma < 0.0:
+      gamma = 180. + gamma
+    afile[1,:6] = np.array([a,b,c,alpha,beta,gamma]).astype(str)
+    #Writing output file
+    out = ''
+    for i in range(len(afile[:,0])):
+       for j in range(len(afile[i,:])):
+         out = out +'    '+afile[i,j]
+       out = out +'\n'
+    with open('%s_2'%(fil),'w') as f:
+        f.write(out)
+    os.system('minimize %s_2 -k %s 0.01 &> /dev/null'%(fil,key))
+    os.system('mv %s_3 strs_expand.xyz'%(fil))
+    os.system('rm %s_2'%fil)
+
+
+#######################################################################################################
+#######################################################################################################
+def aniso_strain_grad (fil,key,P,ply,nmol,T_0,path):
+    dT = 0.01 #Numerical temperature step for local gradient
+    mark = ['xx','yy','zz','xy','xz','yz'] #Markers for saving files
+    lat_vec = prop.PV(fil,P)[2] #Taking lattice vectors of current strucutre
+    lat_mat = crystal_mat(lat_vec[0],lat_vec[1],lat_vec[2],lat_vec[3],lat_vec[4],lat_vec[5]) #Converting lattice vectors to crystal matrix form
+    lat_mat = np.array([lat_mat[0,0],lat_mat[1,1],lat_mat[2,2],lat_mat[0,1],lat_mat[0,2],lat_mat[1,2]])*0.00001 #Numerical parameter step for local gradient
+#    lat_strs = np.max(np.absolute(lat_mat))*0.00005
+    for i in range(6):
+      #Particularly, if the angles are at 90, making the parameter stepsize large enough
+      if lat_mat[i] < 0.00005:
+        lat_mat[i] == 0.00005
+
+
+    wvn_1 = prop.eig_wvn(fil,key)[1]
+    np.save('aniso_p%s_%s.npy'%(ply,path),wvn_1)
+
+    da = np.zeros(6)
+    for i in range(6):
+      dl = np.zeros(6)
+      dl[i] = lat_mat[i]
+#      dl[i] = lat_strs
+
+      mat_expand(fil,key,dl[0],dl[1],dl[2],dl[3],dl[4],dl[5],nmol) #Expanding along particular parameter
+      wvn_2 = prop.eig_wvn('strs_expand.xyz',key)[1]
+      fil_2 = 'p%s_ex%s_%s.xyz'%(ply,path,mark[i])
+      os.system('mv strs_expand.xyz %s'%(fil_2))
+
+      mat_expand(fil,key,-dl[0],-dl[1],-dl[2],-dl[3],-dl[4],-dl[5],nmol) #Contracting along particular parameter
+      wvn_0 = prop.eig_wvn('strs_expand.xyz',key)[1]
+      fil_0 = 'p%s_ex%s_-%s.xyz'%(ply,path,mark[i])
+      os.system('mv strs_expand.xyz %s'%(fil_0))
+
+      da[i] = vec_strain_gradient(fil_0,wvn_0,fil,wvn_1,fil_2,wvn_2,key,T_0,dT,P,nmol,i,dl) #Calculating the local gradient of the given parameter
+      os.system('rm %s %s'%(fil_2,fil_0))
+    da = np.nan_to_num(da)
+    return da
+
+#######################################################################################################
+#######################################################################################################
+def vec_strain_gradient (fil_0,wvn_0,fil_1,wvn_1,fil_2,wvn_2,key,T_0,dT,P,nmol,ind,dl):
+    PV_0 = prop.PV(fil_0,P)
+    PV_1 = prop.PV(fil_1,P)
+    PV_2 = prop.PV(fil_2,P)
+
+    U_0 = prop.lat_ener(fil_0,key)/nmol
+    U_1 = prop.lat_ener(fil_1,key)/nmol
+    U_2 = prop.lat_ener(fil_2,key)/nmol
+
+    G_T0_V0 = PV_0[1]/nmol + U_0 + prop.vib_helm(T_0,wvn_0,nmol)[1]
+    G_T1_V0 = PV_0[1]/nmol + U_0 + prop.vib_helm(T_0 + dT,wvn_0,nmol)[1]
+    G_T2_V0 = PV_0[1]/nmol + U_0 + prop.vib_helm(T_0 + 2*dT,wvn_0,nmol)[1]
+
+    G_T1_V1 = PV_1[1]/nmol + U_1 + prop.vib_helm(T_0 + dT,wvn_1,nmol)[1]
+
+    G_T0_V2 = PV_2[1]/nmol + U_2 + prop.vib_helm(T_0,wvn_2,nmol)[1]
+    G_T1_V2 = PV_2[1]/nmol + U_2 + prop.vib_helm(T_0 + dT,wvn_2,nmol)[1]
+    G_T2_V2 = PV_2[1]/nmol + U_2 + prop.vib_helm(T_0 + 2*dT,wvn_2,nmol)[1]
+
+    ddG_dTda = (G_T2_V2 - G_T2_V0 - G_T0_V2 + G_T0_V0)/(4*dT*(dl[ind]))
+    ddG_dda = (G_T1_V2 - 2*G_T1_V1 + G_T1_V0)/(dl[ind])**2
+    da_dT = - ddG_dTda/ddG_dda
+    return da_dT
+
+
+#######################################################################################################
+####################################################################################################### 
