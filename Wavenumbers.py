@@ -31,7 +31,7 @@ def Call_Wavenumbers(Method,*positional_parameters,**keyword_parameters):
     Volume_Reference = Reference volume of strucutre for Wavenumber_Reference, will be output from Setup_Isotropic_Gruneisen
     New_Volume = Volume of new structure to calculate wavenumbers for
     Gruneisen_Vol_FracStep = Volumetric stepsize to expand lattice minimum structure to numerically determine the Gruneisen parameter
-    molecules_in_cord = number of molecules in Coordinate_file
+    molecules_in_coord = number of molecules in Coordinate_file
     Coordinate_file = File containing lattice parameters and atom coordinates
     Parameter_file = Optional input for program
     Program = 'tink' for Tinker Molecular Modeling
@@ -147,7 +147,7 @@ def Setup_Isotropic_Gruneisen(Coordinate_file,Program,Gruneisen_Vol_FracStep,mol
     Program = 'tink' for Tinker Molecular Modeling
               'test' for a test run
     Gruneisen_Vol_FracStep = Volumetric stepsize to expand lattice minimum structure to numerically determine the Gruneisen parameter
-    molecules_in_cord = number of molecules in Coordinate_file
+    molecules_in_coord = number of molecules in Coordinate_file
 
     **Optional inputs
     Parameter_file = Optional input for program
