@@ -9,11 +9,12 @@ import Properties as Pr
 
 
 ##########################################
-#####             Input              #####
+#                 Input                  #
 ##########################################
-def Call_Wavenumbers(Method,*positional_parameters,**keyword_parameters):
+def Call_Wavenumbers(Method, **keyword_parameters):
     """
-    This function helps to direct how the wavenumbers will be calculated and calls other functions to calculate and return the wavenumbers
+    This function helps to direct how the wavenumbers will be calculated and calls other functions to calculate and 
+    return the wavenumbers
 
     **Required Inputs
     Method = Harmonic approximation ('HA');
@@ -22,77 +23,69 @@ def Call_Wavenumbers(Method,*positional_parameters,**keyword_parameters):
              Gradient Isotropic QHA ('GiQ');
              Gradient Isotropic QHA w/ Gruneisen Parameter ('GiQg');
              Gradient Anisotropic QHA ('GaQ');
-             Gradient Anistoropic QHA w/ Gruneisen Parameter ('GaQg');
+             Gradient Anisotropic QHA w/ Gruneisen Parameter ('GaQg');
 
     **Optional Inputs
     Output = Name of file to put wavenumbers into, if it already exists it will be loaded
     Gruneisen = Gruneisen parameters found with Setup_Isotropic_Gruneisen
     Wavenumber_Reference = Reference wavenumbers for Gruneisen parameter, will be output from Setup_Isotropic_Gruneisen
-    Volume_Reference = Reference volume of strucutre for Wavenumber_Reference, will be output from Setup_Isotropic_Gruneisen
+    Volume_Reference = Reference volume of structure for Wavenumber_Reference, will be output from 
+    Setup_Isotropic_Gruneisen
     New_Volume = Volume of new structure to calculate wavenumbers for
-    Gruneisen_Vol_FracStep = Volumetric stepsize to expand lattice minimum structure to numerically determine the Gruneisen parameter
+    Gruneisen_Vol_FracStep = Volumetric stepsize to expand lattice minimum structure to numerically determine the
+    Gruneisen parameter
     molecules_in_coord = number of molecules in Coordinate_file
     Coordinate_file = File containing lattice parameters and atom coordinates
     Parameter_file = Optional input for program
     Program = 'tink' for Tinker Molecular Modeling
               'test' for a test run
     """
+    # If the output file exists, it will be opened and returned
 
-    keyword_parameters['Output',
-                       'Gruneisen','Wavenumber_Reference','Volume_Reference','New_Volume',
-                       'Gruneisen_Vol_FracStep','molecules_in_coord',
-                       'Coordinate_file','Parameter_file',
-                       'Program']
+    if 'Output' is keyword_parameters:
+        if os.path.isfile(keyword_parameters['Output']):
+            wavenumbers = np.load(keyword_parameters['Output'])
+            return wavenumbers
 
-    if os.path.isfile(Output) == True:
-      #If the output file exists, it will be opened and returned
-      Wavenumbers = np.load(Output)
-      return Wavenumbers
-
-    if ('Program' in keyword_parameters):
-      Program = keyword_parameters['Program']
-
-    else:
-      if Method == ('SiQg' or 'GiQg'):
-        # Methods that use the gruneisen parameter
-        if ('Gruneisen' in keyword_parameters) and ('Wavenumber_Reference' in keyword_parameters) and ('Volume_Reference' in keyword_parameters) and ('New_Volume' in keyword_parameters):
-          # Assigning reference parameters for the isotropic Gruneisen parameter
-          Gruneisen = keyword_parameters['Gruneisen']
-          Wavenumber_Reference = keyword_parameters['Wavenumber_Reference']
-          Volume_Reference = keyword_parameters['Volume_Reference']
-          New_Volume = keyword_parameters['New_Volume']
-
-          # Calculating the wavenumbers of the new Isotropically expanded structure 
-          Wavenumbers = Get_Iso_Gruneisen_Wavenumbers(Gruneisen,Wavenumber_Reference,Volume_Reference,New_Volume)
-          return Wavenumbers
+    if (Method == 'SiQg') or (Method == 'GiQg'):
+        # Methods that use the Gruneisen parameter
+        if ('Gruneisen' in keyword_parameters) and ('Wavenumber_Reference' in keyword_parameters) and \
+                ('Volume_Reference' in keyword_parameters) and ('New_Volume' in keyword_parameters):
+            # Calculating the wavenumbers of the new Isotropically expanded structure
+            wavenumbers = Get_Iso_Gruneisen_Wavenumbers(keyword_parameters['Gruneisen'],
+                                                                keyword_parameters['Wavenumber_Reference'],
+                                                                keyword_parameters['Volume_Reference'],
+                                                                keyword_parameters['New_Volume'])
+            return wavenumbers
 
         else:
-          # If the Gruneisen parameter has yet to be determined, here it will be calculated
-          # It is assumed that the input Coordinate_file is the lattice minimum strucutre
-          Gruneisen, Wavenumber_Reference, Volume_Reference = Setup_Isotropic_Gruneisen(Coordinate_file,Parameter_file,Program,Gruneisen_Vol_FracStep,molecules_in_coord)
-          return Gruneisen, Wavenumber_Reverence, Volume_Reference
+            # If the Gruneisen parameter has yet to be determined, here it will be calculated
+            # It is assumed that the input Coordinate_file is the lattice minimum strucutre
+            Gruneisen, Wavenumber_Reference, Volume_Reference = \
+                        Setup_Isotropic_Gruneisen(keyword_parameters['Coordinate_file'],
+                                                  keyword_parameters['Program'],
+                                                  keyword_parameters['Gruneisen_Vol_FracStep'],
+                                                  keyword_parameters['molecules_in_coord'], Parameter_file=
+                                                  keyword_parameters['Parameter_file'])
+            return Gruneisen, Wavenumber_Reference, Volume_Reference
 
-      elif Method == ('GaQg'):
-        # Anisotropic Gruneisen parameter will be a little different than the other two
-        print "Anisotropic Gruneisen parameter not yet implimented here"
+    elif Method == 'GaQg':
+        print "Anisotropic Gruneisen parameter not yet implemented here"
         sys.exit()
 
-      elif Method == ('SiQ' or 'GiQ' or 'GaQ'):
+    elif (Method == 'SiQ') or (Method == 'GiQ') or (Method == 'GaQ') or (Method == 'HA'):
         # Directly computing the wavenumbers for a specific program, given a coordinate file
-        Coordinate_file = keyword_parameters['Coordinate_file'] # Assigning the coordinate file
-        
-        if Program == 'tink':
-          Parameter_file = keyword_parameters['Parameter_file'] # Assigning the parameter file
-          Wavenumbers = Tinker_Wavenumber(Coordinate_file,Parameter_file )
-        elif Program == 'test':
-          Wavenumbers = Test_Wavenumber(Coordinate_file)
-        return Wavenumbers
+        if keyword_parameters['Program'] == 'tink':
+            wavenumbers = Tinker_Wavenumber(keyword_parameters['Coordinate_file'], keyword_parameters['Parameter_file'])
+        elif keyword_parameters['Program'] == 'test':
+            wavenumbers = Test_Wavenumber(keyword_parameters['Coordinate_file'])
+        return wavenumbers
 
 
 ##########################################
-#####   TINKER MOLECULAR MODELING    #####
+#       TINKER MOLECULAR MODELING        #
 ##########################################
-def Tinker_Wavenumber(Coordinate_file,Parameter_file): #Was Tink_WVN
+def Tinker_Wavenumber(Coordinate_file, Parameter_file): #Was Tink_WVN
     """
     Calls the vibrate executable of Tinker Molecular Modeling and extracts the wavenumbers
 
@@ -100,26 +93,26 @@ def Tinker_Wavenumber(Coordinate_file,Parameter_file): #Was Tink_WVN
     Coordinate_file = Tinker .xyz file for crystal structure
     Parameter_file = Tinker .key file specifying the force field parameter
     """
-
-    # Calling Tinker's vibrate executable and extracting the eigenvalues and wavenumbers of the respective Hessian and mass-weighted Hessian
-    eigenvalues_and_wavenumbers = subprocess.check_output("vibrate %s -k %s  CR |  grep -oP '[-+]*[0-9]*\.[0-9]{2,9}'"%(Coordinate_file,Parameter_file),shell=True)
-
+    # Calling Tinker's vibrate executable and extracting the eigenvalues and wavenumbers of the respective
+    # Hessian and mass-weighted Hessian
+    eigenvalues_and_wavenumbers = subprocess.check_output("vibrate %s -k %s  CR |  grep -oP '[-+]*[0-9]*\.[0-9]{2,9}'"
+                                                          % (Coordinate_file, Parameter_file), shell=True)
     # Splitting the outputs into array form
     eigenvalues_and_wavenumbers = eigenvalues_and_wavenumbers.split('\n')
     eigenvalues_and_wavenumbers_hold = []
-    for i in eigwvn:
-      if i == '':
-        pass
-      else:
-        eigenvalues_and_wavenumbers_hold.append(float(i))
+    for i in eigenvalues_and_wavenumbers:
+        if i == '':
+            pass
+        else:
+            eigenvalues_and_wavenumbers_hold.append(float(i))
 
     # Extracting the wavenumbers and assuring they're sorted from lowest to highest
-    Wavenumbers = np.sort(np.array(eigwvn2[len(eigwvn2)/2:]))
-    return Wavenumbers
+    wavenumbers = np.sort(np.array(eigenvalues_and_wavenumbers_hold[len(eigenvalues_and_wavenumbers_hold)/2:]))
+    return wavenumbers
 
 
 ##########################################
-#####              Test              #####
+#                  Test                  #
 ##########################################
 def Test_Wavenumber(Coordinate_file):
     """
@@ -129,14 +122,18 @@ def Test_Wavenumber(Coordinate_file):
     **Required Inputs
     Coordinate_file = File containing lattice parameters and atom coordinates
     """
-    Wavenumbers = 0.
-    return Wavenumbers
+    wavenumbers = np.array([0.,0.,0.,52.,380.,1570.,3002.])
+    lattice_parameters= np.load(Coordinate_file)
+    for i in np.arange(3,len(wavenumbers[3:])+1):
+        wavenumbers[i] = wavenumbers[i]*(1/3.)*(((lattice_parameters[0]-16)/6)**2+((lattice_parameters[1]-12)/5)**2+((lattice_parameters[2]-23)/11)**2)
+    return wavenumbers
 
 
 ##########################################
-#####           Gruneisen            #####
+#               Gruneisen                #
 ##########################################
-def Setup_Isotropic_Gruneisen(Coordinate_file,Program,Gruneisen_Vol_FracStep,molecules_in_coord,*positional_parameters,**keyword_parameters):
+def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, molecules_in_coord,
+                              **keyword_parameters):
     """
     This function calculates the Isotropic Gruneisen parameters for a given coordinate file.
     Calculated numerically given a specified volume fraction stepsize
@@ -146,42 +143,48 @@ def Setup_Isotropic_Gruneisen(Coordinate_file,Program,Gruneisen_Vol_FracStep,mol
     Coordinate_file = File containing lattice parameters and atom coordinates
     Program = 'tink' for Tinker Molecular Modeling
               'test' for a test run
-    Gruneisen_Vol_FracStep = Volumetric stepsize to expand lattice minimum structure to numerically determine the Gruneisen parameter
+    Gruneisen_Vol_FracStep = Volumetric stepsize to expand lattice minimum structure to numerically determine the 
+    Gruneisen parameter
     molecules_in_coord = number of molecules in Coordinate_file
 
     **Optional inputs
     Parameter_file = Optional input for program
     """
-
-    keyword_parameters['Parameter_file']
-
     # Change in lattice parameters for expanded structure
-    dLattice_Parameters = Ex.dvec_Iso((1+Gruneisen_Vol_FracStep),Program,Coordinate_file)
-    # Creating expanded structure and putting it in temp.*
-    Ex.Expand(Coordinate_file,Parameter_file,Program,dLattice_Parameters,molecules_in_coord,'temp')
+    dLattice_Parameters = Ex.Isotropic_Change_Lattice_Parameters((1+Gruneisen_Vol_FracStep), Program, Coordinate_file)
 
+    # Determining wavenumbers of lattice strucutre and expanded strucutre
+    # Also, assigning a file ending name for the nex coordinate file (program dependent)
     if Program == 'tink':
-      Parameter_file = keyword_parameters['Parameter_file'] # Keyfile for Tinker
-      Wavenumber_Reference = Tink_WVN(Coordinate_file,Parameter_file) # Wavenumbers for lattice structure
-      Wavenumber_expand = Tink_WVN('temp.xyz',Parameter_file) # Wavenumbers expanded strucutre
-      lattice_parameters = Pr.Tink_LATVEC(Coordinate_file) # Extracting lattice parameters from lattice structure
-      file_ending = '.xyz' # File ending for coordinate files
+        Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp',
+                            dlattice_parameters=dLattice_Parameters, Parameter_file=keyword_parameters['Parameter_file'])
+        Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'])
+        Wavenumber_expand = Tinker_Wavenumber('temp.xyz', keyword_parameters['Parameter_file'])
+        lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
+        file_ending = '.xyz'
     elif Program == 'test':
-      Wavenumber_Reference = Test_WVN(Coordinate_file,Parameter_file) # Wavenumbers for lattice structure
-      Wavenumber_expand = Test_WVN('temp.npy',Parameter_file) # Wavenumbers expanded strucutre
-      lattice_parameters = Pr.Test_LATVEC(Coordinate_file) # Extracting lattice parameters from lattice structure
-      file_ending = '.npy' # File ending for 'coordinate' files
+        Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp',
+                            dlattice_parameters=dLattice_Parameters)
+        Wavenumber_Reference = Test_Wavenumber(Coordinate_file)
+        Wavenumber_expand = Test_Wavenumber('temp.npy')
+        lattice_parameters = Pr.Test_Lattice_Parameters(Coordinate_file)
+        file_ending = '.npy'
 
-    Volume_Reference = Pr.Volume(lattice_parameters) # Reference volume
-    Volume_expand = Volume_Reference + Gruneisen_Vol_FracStep*Volume_Reference # Volume of expanded strucutre
+    # Calculating the volume of the lattice minimum and expanded structure
+    Volume_Reference = Pr.Volume(lattice_parameters=lattice_parameters)
+    Volume_expand = Volume_Reference + Gruneisen_Vol_FracStep*Volume_Reference
 
-    Gruneisen = -(np.log(Wavenumber_Reference) - np.log(Wavenumber_expand))/(np.log(Volume_Reference) - np.log(Volume_expand))
-    Gruneisen[:3] = 0
+    # Calculating the Gruneisen parameter and zeroing out the parameters for the translational modes
+    Gruneisen = np.zeros(len(Wavenumber_Reference))
+    Gruneisen[3:] = -(np.log(Wavenumber_Reference[3:]) - np.log(Wavenumber_expand[3:]))/(np.log(Volume_Reference) -
+                                                                                 np.log(Volume_expand))
+
+    # Removing extra files created in process
     os.system('rm temp'+file_ending)
     return Gruneisen, Wavenumber_Reference, Volume_Reference
 
 
-def Get_Iso_Gruneisen_Wavenumbers(Gruneisen,Wavenumber_Reference,Volume_Reference,New_Volume): #Was Iso_GRU_New
+def Get_Iso_Gruneisen_Wavenumbers(Gruneisen, Wavenumber_Reference, Volume_Reference, New_Volume): #Was Iso_GRU_New
     """
     This function calculates new wavenumber for an isotropically expanded strucutre using the gruneisen parameter
     ******Eventually! Impliment a second order Gruneisen parameter in here
@@ -192,9 +195,9 @@ def Get_Iso_Gruneisen_Wavenumbers(Gruneisen,Wavenumber_Reference,Volume_Referenc
     Volume_Reference = Reference volume of strucutre for Wavenumber_Reference, will be output from Setup_Isotropic_Gruneisen
     New_Volume = Volume of new structure to calculate wavenumbers for
     """
-
-    Wavenumbers = np.dot(Wavenumber_Reference,np.diag(np.power(New_Volume/Volume_Reference,-1*Gruneisen)))
-    return Wavenumbers
+    wavenumbers = np.diag(np.power(New_Volume/Volume_Reference, -1*Gruneisen))
+    wavenumbers = np.dot(Wavenumber_Reference, wavenumbers)
+    return wavenumbers
 
 
 
