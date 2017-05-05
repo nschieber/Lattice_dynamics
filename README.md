@@ -19,8 +19,8 @@ large subset of molecules and shouldn't need to be changed.
 python input.py
 
 Scripts:
-- Properties.py: Contains functions to calculate individual properties for lattice dynamics. Cleaned up from previous
-  version and seperates a lot of functions.
+-  	ThermodynamicProperties.py: Contains functions to calculate individual properties for lattice dynamics. 
+  Cleaned up from previous version and seperates a lot of functions.
 - Wavenumbers.py: Contains all wavenumber functions.
 - Expand.py: Contains functions to expand unit cells or determine the local gradient of thermal expansion.
 - input.py: General input file with flags for user inputs and runs the general lattice dynamic script at the end.
