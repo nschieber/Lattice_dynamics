@@ -22,7 +22,7 @@ Pressure = '1'
 # 'GiQg' - Gradient isotropic quasi-harmonic approximation with Gruneisen parameter
 # 'GaQ'  - Gradient anisotropic quasi-harmonic approximation
 # 'GaQg' - Gradient anisotropic quasi-harmonic approximation with Gruneisen parameter
-Method = 'GaQ'
+Method = 'GiQ'
 
 ## Output
 # Output name for files
@@ -109,7 +109,7 @@ Gruneisen_Vol_FracStep = '1.5e-3'
 Wavenum_Tol = '-1.0'
 
 ### Maximum temperature for gradient method
-Gradient_MaxTemp = '100.'
+Gradient_MaxTemp = '300.'
 
 ### Number of Hessians for anistropic local gradient
 # Option - Description
