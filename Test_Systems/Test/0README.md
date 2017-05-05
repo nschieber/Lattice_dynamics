@@ -1,6 +1,8 @@
 This system is to provide fast and efficient results for testing new code.
 
-input.py: already modified for run just type 'python input.py' to run.
+input.py: input file with necessary parameters to run a Harmonic approxiation, results are provide in results/. To test other lattice dynamic calculations, change the Method parameter within the file. To run a lattice dynamic calculation just type:\
+python input.py
+
 test.npy: contains an array of "lattice minimum" parameters for the test run.
     * Parameters are [a,b,c,alpha,beta,gamma] in 0-2 Angstroms and 3-5 in Degrees
     ** Lattice minimum parameters are those that minimize Test_U in Properties.py
