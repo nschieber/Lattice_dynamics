@@ -44,11 +44,11 @@ Statistical_mechanics = 'Classical'
 
 ## Structure
 # Coordinate file
-Coordinate_file = 'molecule.xyz'
+Coordinate_file = 'Test_Systems/Tinker/hxacan_p2/molecule.xyz'
 
 ## Molecular parameters
 # Input file for particular program
-Parameter_file = 'keyfile.key'
+Parameter_file = 'Test_Systems/Tinker/hxacan_p2/keyfile.key'
 
 ## Nuber of molecules
 #****I want to eventually replace this with a program specific code to look at connectivity
@@ -67,7 +67,7 @@ molecules_in_coord = 4
 # 'V' - Volume [Ang.^3]
 # 'u' - Lattice parameters [Ang., Ang., Ang., Deg., Deg., Deg.]
 # 'U' - Potential energy [kcal/mol]
-properties = ['G','u','V','T']
+properties_to_save = ['G','u','V','T']
 
 ### Gradient options ###
 ## Numerical analysis for thermal expansion
@@ -133,7 +133,7 @@ Run_LatticeDynamics.Lattice_Dynamics(Temperature = Temperature,
                                      Program = Program,
                                      Output = Output,
                                      Coordinate_file = Coordinate_file, 
-                                     Parameter_File = Parameter_file, 
+                                     Parameter_file = Parameter_file, 
                                      molecules_in_coord = molecules_in_coord,
                                      properties_to_save = properties_to_save,
                                      NumAnalysis_method = NumAnalysis_method, 
