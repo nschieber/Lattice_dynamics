@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
 import pdb
+import matplotlib.pyplot as plt
 
 ##Input file
 
@@ -79,7 +80,7 @@ NumAnalysis_method = 'RK4'
 
 ## Stepsize numerical analysis
 # Right now only temperature is the only input option
-NumAnalysis_step = 25.0
+NumAnalysis_step = 5.0
 
 ## Local gradient presets
 # These options are tuned best for a wide array of options
@@ -152,11 +153,31 @@ Run_LatticeDynamics.Lattice_Dynamics(Temperature = Temperature,
                                      Gruneisen_order = Gruneisen_order)
 
 # now, read the data?
+props = dict()
+T = np.load(Output + '_' + 'T_' + Method + '.npy')  # no statistical mechanics method with T.
+for p in properties_to_save:
+    if p != 'T':
+        props[p] = np.load(Output + '_' + p + Statistical_mechanics + '_' + Method + '.npy')
 
-G_classical = np.load('out_GClassical_GiQ.npy')
-GiQ_WVN = np.load('out_GiQ_WVN.npy')
-GiQ_dV = np.load('out_GiQ_dV.npy')
-T_GiQ = np.load('out_T_GiQ.npy')
-VClassical_GiQ = np.load('out_VClassical_GiQ.npy')
+dV = np.load(Output + '_' + Method + '_dV.npy')
+WVN = np.load(Output + '_' + Method + '_WVN.npy')
 raw = np.load('out_raw.npy')
-uClassical_GiQ = np.load('out_uClassical_GiQ.npy')
+
+pdb.set_trace()
+plt.figure(1)
+plt.plot(props['V'],T, label='Volume')
+plt.xlabel('T (K)')
+plt.ylabel('Volume (A^3)')
+plt.title('V vs. T')
+plt.legend()
+plt.show()
+
+plt.figure(2)
+plt.plot(props['G'],T, label='Volume')
+plt.xlabel('T (K)')
+plt.ylabel('Free Energy (units)')
+plt.title('G vs. T')
+plt.legend()
+plt.show()
+
+
