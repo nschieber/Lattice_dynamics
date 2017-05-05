@@ -3,7 +3,7 @@ import os
 import sys
 import itertools as it
 import numpy as np
-import Properties as Pr
+import ThermodynamicProperties as Pr
 import Wavenumbers as Wvn
 
 ##########################################
@@ -20,8 +20,8 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
                    Gradient Anisotropic QHA w/ Gruneisen Parameter ('GaQg');
     :param Purpose: 'expand' expanding a strucutre
                     'local_gradient' finding the local gradient of expansion for a strucutre
-    :param Program: 'tink' Tinker molecular modeling
-                    'test' Test case
+    :param Program: 'Tinker' Tinker molecular modeling
+                    'Test' Test case
     :param Coordinate_file: file containing lattice parameters (and coordinates)
     :param molecules_in_coord: number of molecules in Coordinate_file
     :param keyword_parameters: Parameter_file, volume_fraction_chage, matrix_parameters_fraction_change, Temperature,
@@ -35,8 +35,8 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
     Temperature: in Kelvin
     Pressure: in atm
     LocGrd_Temp_step: temperature step size for numerical gradient
-    Statistical_mechanics: 'C' Classical mechanics
-                           'Q' Quantum mechanics
+    Statistical_mechanics: 'Classical' Classical mechanics
+                           'Quantum' Quantum mechanics
     Gruneisen: isotropic Gruneisen parameter
     Wavenumber_reference: reference wavenumbers for the Gruneisen parameter
     Volume_reference: reference volume for the Gruneisen parameter
@@ -225,14 +225,14 @@ def Isotropic_Change_Lattice_Parameters(volume_fraction_change, Program, Coordin
 
     **Required Inputs
     volume_fraction_change = Volume of the new desired strucutre over the volume of the previous structure
-    Program = 'tink' for Tinker Molecular Modeling
-              'test' for a test run
+    Program = 'Tinker' for Tinker Molecular Modeling
+              'Test' for a test run
     Coordinate_file = file containing lattice parameters of the previous strucuture
     """
     # Calling the lattice parameters
-    if Program == 'tink':
+    if Program == 'Tinker':
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
-    elif Program == 'test':
+    elif Program == 'Test':
         lattice_parameters = Pr.Test_Lattice_Parameters(Coordinate_file)
 
     # Calculating the new isotropic lattice parameters
@@ -254,14 +254,14 @@ def Change_Crystal_Matrix(matrix_parameters_fraction_change, Program, Coordinate
 
     **Required Inputs
     matrix_parameters_fraction_change = New parameter over old parameter
-    Program = 'tink' for Tinker Molecular Modeling
-              'test' for a test run
+    Program = 'Tinker' for Tinker Molecular Modeling
+              'Test' for a test run
     Coordinate_file = file containing lattice parameters of the previous structure
     """
     # Calling the lattice parameters
-    if Program == 'tink':
+    if Program == 'Tinker':
       lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
-    elif Program == 'test':
+    elif Program == 'Test':
       lattice_parameters = Pr.Test_Lattice_Parameters(Coordinate_file)
 
     # Computing the crystal matrix of the coordinate file and determining the change in parameters based off of the
@@ -288,8 +288,8 @@ def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coor
 
     **Required Inputs
     Coordinate_file = file containing lattice parameters (and coordinates)
-    Program = 'tink' for Tinker Molecular Modeling
-              'test' for a test run
+    Program = 'Tinker' for Tinker Molecular Modeling
+              'Test' for a test run
     Expansion_type = 'lattice parameters' expanding the structure by lattice parameters ([a,b,c,alpha,beta,gamma])
                    = 'crystal_matrix' expanding the strucutre by changes in the crystal matrix
     molecules_in_coord = number of molecules in the coordinate file
@@ -300,7 +300,7 @@ def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coor
     dcrystal_matrix = changes in crystal matrix
     Parameter_file = program specific file containingforce field parameters
     """
-    if Program == 'test':
+    if Program == 'Test':
         lattice_parameters = Pr.Test_Lattice_Parameters(Coordinate_file)
         if Expansion_type == 'lattice_parameters':
             lattice_parameters = lattice_parameters + keyword_parameters['dlattice_parameters']
@@ -311,7 +311,7 @@ def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coor
         Output_Test_New_Coordinate_File(lattice_parameters, Output)
 
     else:
-        if Program == 'tink':
+        if Program == 'Tinker':
             coordinates = Return_Tinker_Coordinates(Coordinate_file)
             lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
 
@@ -340,7 +340,7 @@ def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coor
                 np.subtract(coordinates[i*atoms_per_molecule:(i+1)*atoms_per_molecule],
                             -1*Coordinate_center_of_mass[i, :])
 
-        if Program == 'tink':
+        if Program == 'Tinker':
             Output_Tinker_New_Coordinate_File(Coordinate_file, keyword_parameters['Parameter_file'], coordinates,
                                               lattice_parameters, Output)
 
@@ -353,15 +353,15 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
     This function calculates the local gradient of isotropic expansion for a given coordinate file
     
     :param Coordinate_file: file containing lattice parameters (and coordinates)
-    :param Program: 'tink' Tinker molecular modeling
-                    'test' Test case
+    :param Program: 'Tinker' Tinker molecular modeling
+                    'Test' Test case
     :param Temperature: in Kelvin
     :param Pressure: in atm
     :param LocGrd_Vol_FracStep: fractional volumetric step size for numerical gradient 
     :param LocGrd_Temp_step: temperature step size for numerical gradient
     :param molecules_in_coord: number of molecules in Coordinate_file
-    :param Statistical_mechanics: 'C' Classical mechanics
-                                  'Q' Quantum mechanics
+    :param Statistical_mechanics: 'Classical' Classical mechanics
+                                  'Quantum' Quantum mechanics
     :param Method: 'GiQ' Gradient isotropic QHA
                    'GiQg' Gradient isotropic QHA with Gruneisen Parameter
     :param keyword_parameters: Parameter_file, Gruneisen, Wavenumber_reference, Volume_reference
@@ -373,10 +373,10 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
     Volume_reference: reference volume for the Gruneisen parameter
     """
     # Assigning general names for expanded and compressed structures
-    if Program == 'tink':
+    if Program == 'Tinker':
         coordinate_plus = 'plus.xyz'
         coordinate_minus = 'minus.xyz'
-    elif Program == 'test':
+    elif Program == 'Test':
         coordinate_plus = 'plus.npy'
         coordinate_minus = 'minus.npy'
         keyword_parameters['Parameter_file'] = ''
@@ -461,15 +461,15 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
     This function calculates the local gradient of anisotropic expansion for a given coordinate file
     
     :param Coordinate_file: file containing lattice parameters (and coordinates)
-    :param Program: 'tink' Tinker molecular modeling
-                    'test' Test case
+    :param Program: 'Tinker' Tinker molecular modeling
+                    'Test' Test case
     :param Temperature: in Kelvin
     :param Pressure: in atm
     :param LocGrd_LatParam_FracStep: 
     :param LocGrd_Temp_step: temperature step size for numerical gradient
     :param molecules_in_coord: number of molecules in Coordinate_file
-    :param Statistical_mechanics: 'C' Classical mechanics
-                                  'Q' Quantum mechanics
+    :param Statistical_mechanics: 'Classical' Classical mechanics
+                                  'Quantum' Quantum mechanics
     :param Method: 'GaQ' Gradient anisotropic QHA
                    'GaQg' Gradient anisotropic QHA with Gruneisen Parameter
     :param Hessian_number: 73 Hessians to calculate the complete anistropic gradient
@@ -488,9 +488,9 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
     #Aniso_Local_Grad
 
     # Determining the file ending of the coordinate files
-    if Program == 'tink':
+    if Program == 'Tinker':
         file_ending = '.xyz'
-    elif Program == 'test':
+    elif Program == 'Test':
         file_ending = '.npy'
         keyword_parameters['Parameter_file'] = ''
 
@@ -529,9 +529,9 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
 
     # Retrieving the wavenumbers of the initial structure
     if Method == 'GaQ':
-        if Program == 'tink':
+        if Program == 'Tinker':
             wavenumbers = Wvn.Tinker_Wavenumber(Coordinate_file, Parameter_file=keyword_parameters['Parameter_file'])
-        elif Program == 'test':
+        elif Program == 'Test':
             wavenumbers = Wvn.Test_Wavenumber(Coordinate_file)
     else:
         print "ANISOTRPIC GRUNEISEN PARAMERATER NOT YET IMPLIMENTED"

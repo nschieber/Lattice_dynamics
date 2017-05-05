@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import subprocess
+import numpy as np
+import pdb
 
 ##Input file
 
@@ -44,11 +45,11 @@ Statistical_mechanics = 'Classical'
 
 ## Structure
 # Coordinate file
-Coordinate_file = 'Test_systems/Test/test.npy'
+Coordinate_file = 'test'
 
 ## Molecular parameters
 # Input file for particular program
-Parameter_file = 'keyfile.key'
+Coordinate_file = 'Test_systems/Test/test.npy'
 
 ## Nuber of molecules
 #****I want to eventually replace this with a program specific code to look at connectivity
@@ -67,8 +68,7 @@ molecules_in_coord = 1
 # 'V' - Volume [Ang.^3]
 # 'u' - Lattice parameters [Ang., Ang., Ang., Deg., Deg., Deg.]
 # 'U' - Potential energy [kcal/mol]
-properties = ['G','u','V','T']
-
+properties_to_save = ['G','u','V','T']
 
 ### Gradient options ###
 ## Numerical analysis for thermal expansion
@@ -109,7 +109,7 @@ Gruneisen_Vol_FracStep = 1.5e-3
 Wavenum_Tol = -1.0
 
 ### Maximum temperature for gradient method
-Gradient_MaxTemp = 300.0
+Gradient_MaxTemp = 100.0
 
 ### Number of Hessians for anistropic local gradient
 # Option - Description
@@ -121,7 +121,42 @@ Aniso_LocGrad_Type = '73'
 # Gruneisen Order
 # Option - Description
 # 'First'    - gamma = dln(omega)/dln(V)
-# 'Second'   - gamma = V/omega*[domega/dV + d^2omega/dV^2
+# 'Second'    - gamma = V/omega*[domega/dV + d^2omega/dV^2
 Gruneisen_order = 'First'
 
+## Run Program ## 
 
+import Run_LatticeDynamics
+
+Run_LatticeDynamics.Lattice_Dynamics(Temperature = Temperature, 
+                                     Pressure = Pressure, 
+                                     Method = Method, 
+                                     Program = Program,
+                                     Output = Output,
+                                     Coordinate_file = Coordinate_file, 
+                                     molecules_in_coord = molecules_in_coord,
+                                     properties_to_save = properties_to_save,
+                                     NumAnalysis_method = NumAnalysis_method, 
+                                     NumAnalysis_step  = NumAnalysis_step,
+                                     LocGrd_Temp_step = LocGrd_Temp_step, 
+                                     LocGrd_Vol_FracStep = LocGrd_Vol_FracStep,
+                                     LocGrd_LatParam_FracStep = LocGrd_LatParam_FracStep, 
+                                     StepWise_Vol_StepFrac = StepWise_Vol_StepFrac,
+                                     StepWise_Vol_LowerFrac = StepWise_Vol_LowerFrac, 
+                                     StepWise_Vol_UpperFrac = StepWise_Vol_UpperFrac,
+                                     Statistical_mechanics  = Statistical_mechanics,
+                                     Gruneisen_Vol_FracStep = Gruneisen_Vol_FracStep,
+                                     Wavenum_Tol = Wavenum_Tol, 
+                                     Gradient_MaxTemp = Gradient_MaxTemp,
+                                     Aniso_LocGrad_Type = Aniso_LocGrad_Type,
+                                     Gruneisen_order = Gruneisen_order)
+
+# now, read the data?
+
+G_classical = np.load('out_GClassical_GiQ.npy')
+GiQ_WVN = np.load('out_GiQ_WVN.npy')
+GiQ_dV = np.load('out_GiQ_dV.npy')
+T_GiQ = np.load('out_T_GiQ.npy')
+VClassical_GiQ = np.load('out_VClassical_GiQ.npy')
+raw = np.load('out_raw.npy')
+uClassical_GiQ = np.load('out_uClassical_GiQ.npy')

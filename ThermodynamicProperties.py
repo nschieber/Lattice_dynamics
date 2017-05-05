@@ -16,12 +16,12 @@ def Properties(Coordinate_file, wavenumbers, Temperature, Pressure, Program, Sta
     **Required Inputs
     Temperature = single temperature in Kelvin to determine the vibrational entropy (does not work at 0 K)
     Pressure = single Pressure in atm
-    Program = 'tink' for Tinker Molecular Modeling
-              'test' for a test run
+    Program = 'Tinker' for Tinker Molecular Modeling
+              'Test' for a test run
     wavenumbers = array of wavenumber (in order with the first three being 0 cm**-1 for the translational modes)
     Coordinate_file = File containing lattice parameters and atom coordinates
-    Statistical_mechanics = 'C' Classical mechanics
-                            'Q' Quantum mechanics
+    Statistical_mechanics = 'Classical' Classical mechanics
+                            'Quantum' Quantum mechanics
     molecules_in_coord = number of molecules in coordinate file
 
     **Optional Inputs
@@ -31,21 +31,21 @@ def Properties(Coordinate_file, wavenumbers, Temperature, Pressure, Program, Sta
     properties = np.zeros(14)
     properties[0] = Temperature  # Temperature
     properties[1] = Pressure  # Pressure
-    if Program == 'tink':
+    if Program == 'Tinker':
         properties[3] = Tinker_U(Coordinate_file, keyword_parameters['Parameter_file']) / molecules_in_coord
         # Potential energy
         properties[7:13] = Tinker_Lattice_Parameters(Coordinate_file)  # Lattice parameters
-    elif Program == 'test':
+    elif Program == 'Test':
         properties[3] = Test_U(Coordinate_file) / molecules_in_coord  # Potential energy
         properties[7:13] = Test_Lattice_Parameters(Coordinate_file)  # Lattice parameters
     properties[6] = Volume(lattice_parameters=properties[7:13])  # Volume
     if Temperature != 0.:
-        if Statistical_mechanics == 'C':
+        if Statistical_mechanics == 'Classical':
             properties[4] = Classical_Vibrational_A(Temperature,
                                                     wavenumbers) / molecules_in_coord  # Classical vibrational Helmholtz
             properties[13] = Classical_Vibrational_S(Temperature,
                                                      wavenumbers) / molecules_in_coord  # Classical vibrational Entropy
-        if Statistical_mechanics == 'Q':
+        if Statistical_mechanics == 'Quantum':
             properties[4] = Quantum_Vibrational_A(Temperature,
                                                   wavenumbers) / molecules_in_coord  # Quantum vibrational Helmholtz
             properties[13] = Quantum_Vibrational_S(Temperature,
@@ -63,12 +63,12 @@ def Properties_with_Temperature(Coordinate_file, wavenumbers, Temperature, Press
     **Required Inputs
     Temperature = single temperature in Kelvin to determine the vibrational entropy (does not work at 0 K)
     Pressure = single Pressure in atm
-    Program = 'tink' for Tinker Molecular Modeling
-              'test' for a test run
+    Program = 'Tinker' for Tinker Molecular Modeling
+              'Test' for a test run
     wavenumbers = array of wavenumber (in order with the first three being 0 cm**-1 for the translational modes)
     Coordinate_file = File containing lattice parameters and atom coordinates
-    Statistical_mechanics = 'C' Classical mechanics
-                            'Q' Quantum mechanics
+    Statistical_mechanics = 'Classical' Classical mechanics
+                            'Quantum' Quantum mechanics
     molecules_in_coord = number of molecules in coordinate file
 
     **Optional Inputs
@@ -109,8 +109,8 @@ def Save_Properties(properties, Properties_to_save, Output, Method, Statistical_
              Gradient Isotropic QHA w/ Gruneisen Parameter ('GiQg');
              Gradient Anisotropic QHA ('GaQ');
              Gradient Anistoropic QHA w/ Gruneisen Parameter ('GaQg');
-    Statistical_mechanics = 'C' Classical mechanics
-                            'Q' Quantum mechanics
+    Statistical_mechanics = 'Classical' Classical mechanics
+                            'Quantum' Quantum mechanics
     """
     for i in Properties_to_save:
         if i == 'T':  # Temperature
@@ -216,8 +216,8 @@ def Volume(**keyword_parameters):  # Was V
 
     **Optional Inputs
     lattice_parameters = crystal lattice parameters as an array [a,b,c,alpha,beta,gamma]
-    Program = 'tink' for Tinker Molecular Modeling
-              'test' for a test run 
+    Program = 'Tinker' for Tinker Molecular Modeling
+              'Test' for a test run 
     Coordinate_file = File containing lattice parameters and atom coordinates
     """
     if 'lattice_parameters' in keyword_parameters:
@@ -227,10 +227,10 @@ def Volume(**keyword_parameters):  # Was V
         # Assigning the type of program and coordinate file
         program = keyword_parameters['Program']
         coordinate_file = keyword_parameters['Coordinate_file']
-        if program == 'tink':
+        if program == 'Tinker':
             # Retrieving lattice parameters of a tinker coordinate file
             lattice_parameters = Tinker_Lattice_Parameters(coordinate_file)
-        elif program == 'test':
+        elif program == 'Test':
             # Retrieving lattice parameters of a test coordinate file
             lattice_parameters = Test_Lattice_Parameters(coordinate_file)
 
@@ -350,30 +350,30 @@ def Gibbs_Free_Energy(Temperature, Pressure, Program, wavenumbers, Coordinate_fi
     **Required Inputs
     Temperature = single temperature in Kelvin to determine the vibrational entropy (does not work at 0 K)
     Pressure = single Pressure in atm
-    Program = 'tink' for Tinker Molecular Modeling
-              'test' for a test run
+    Program = 'Tinker' for Tinker Molecular Modeling
+              'Test' for a test run
     wavenumbers = array of wavenumber (in order with the first three being 0 cm**-1 for the translational modes)
     Coordinate_file = File containing lattice parameters and atom coordinates
-    Statistical_mechanics = 'C' Classical mechanics
-                            'Q' Quantum mechanics
+    Statistical_mechanics = 'Classical' Classical mechanics
+                            'Quantum' Quantum mechanics
     molecules_in_coord = number of molecules in coordinate file
 
     **Optional Inputs
     Parameter_file = Optional input for program
     """
     # Potential Energy
-    if Program == 'tink':
+    if Program == 'Tinker':
         U = Tinker_U(Coordinate_file, keyword_parameters['Parameter_file']) / molecules_in_coord  # Potential Energy
-    elif Program == 'test':
+    elif Program == 'Test':
         U = Test_U(Coordinate_file) / molecules_in_coord
 
     # Volume
     volume = Volume(Program=Program, Coordinate_file=Coordinate_file)
 
     # Helmholtz free energy
-    if Statistical_mechanics == 'C':
+    if Statistical_mechanics == 'Classical':
         A = Classical_Vibrational_A(Temperature, wavenumbers) / molecules_in_coord
-    elif Statistical_mechanics == 'Q':
+    elif Statistical_mechanics == 'Quantum':
         A = Quantum_Vibrational_A(Temperature, wavenumbers) / molecules_in_coord
 
     # Gibbs Free energy

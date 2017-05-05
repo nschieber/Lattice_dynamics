@@ -5,7 +5,7 @@ import sys
 import subprocess
 import numpy as np
 import Expand as Ex
-import Properties as Pr
+import ThermodynamicProperties as Pr
 
 
 ##########################################
@@ -37,8 +37,8 @@ def Call_Wavenumbers(Method, **keyword_parameters):
     molecules_in_coord = number of molecules in Coordinate_file
     Coordinate_file = File containing lattice parameters and atom coordinates
     Parameter_file = Optional input for program
-    Program = 'tink' for Tinker Molecular Modeling
-              'test' for a test run
+    Program = 'Tinker' for Tinker Molecular Modeling
+              'Test' for a test run
     """
     # If the output file exists, it will be opened and returned
 
@@ -75,9 +75,9 @@ def Call_Wavenumbers(Method, **keyword_parameters):
 
     elif (Method == 'SiQ') or (Method == 'GiQ') or (Method == 'GaQ') or (Method == 'HA'):
         # Directly computing the wavenumbers for a specific program, given a coordinate file
-        if keyword_parameters['Program'] == 'tink':
+        if keyword_parameters['Program'] == 'Tinker':
             wavenumbers = Tinker_Wavenumber(keyword_parameters['Coordinate_file'], keyword_parameters['Parameter_file'])
-        elif keyword_parameters['Program'] == 'test':
+        elif keyword_parameters['Program'] == 'Test':
             wavenumbers = Test_Wavenumber(keyword_parameters['Coordinate_file'])
         return wavenumbers
 
@@ -141,8 +141,8 @@ def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, 
 
     **Required Inputs
     Coordinate_file = File containing lattice parameters and atom coordinates
-    Program = 'tink' for Tinker Molecular Modeling
-              'test' for a test run
+    Program = 'Tinker' for Tinker Molecular Modeling
+              'Test' for a test run
     Gruneisen_Vol_FracStep = Volumetric stepsize to expand lattice minimum structure to numerically determine the 
     Gruneisen parameter
     molecules_in_coord = number of molecules in Coordinate_file
@@ -155,14 +155,14 @@ def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, 
 
     # Determining wavenumbers of lattice strucutre and expanded strucutre
     # Also, assigning a file ending name for the nex coordinate file (program dependent)
-    if Program == 'tink':
+    if Program == 'Tinker':
         Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp',
                             dlattice_parameters=dLattice_Parameters, Parameter_file=keyword_parameters['Parameter_file'])
         Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'])
         Wavenumber_expand = Tinker_Wavenumber('temp.xyz', keyword_parameters['Parameter_file'])
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
         file_ending = '.xyz'
-    elif Program == 'test':
+    elif Program == 'Test':
         Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp',
                             dlattice_parameters=dLattice_Parameters)
         Wavenumber_Reference = Test_Wavenumber(Coordinate_file)
