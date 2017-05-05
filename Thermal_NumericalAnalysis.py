@@ -3,7 +3,7 @@ import os
 import sys
 import numpy as np
 import Expand as Ex
-import Properties as Pr
+import ThermodynamicProperties as Pr
 import Wavenumbers as Wvn
 
 ##########################################
@@ -18,14 +18,14 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
                    Gradient Isotropic QHA w/ Gruneisen Parameter ('GiQg');
                    Gradient Anisotropic QHA ('GaQ');
     :param Coordinate_file: file containing the lattice parameters (and coordinates)
-    :param Program: 'tink' for Tinker Molecular Modeling
-                    'test' for a test run
+    :param Program: 'Tinker' for Tinker Molecular Modeling
+                    'Test' for a test run
     :param Temperature: in Kelvin
     :param Pressure: in atm
     :param LocGrd_Temp_step: temperature step size to use in local gradient 
     :param molecules_in_coord: number of molecules in coordinate file
-    :param Statistical_mechanics: 'C' Classical mechanics
-                                  'Q' Quantum mechanics
+    :param Statistical_mechanics: 'Classical' Classical mechanics
+                                  'Quantum' Quantum mechanics
     :param RK4_stepsize: stepsize for runge-kutta 4th order
     :param keyword_parameters: Parameter_file, LocGrd_Vol_FracStep, LocGrd_LatParam_FracStep, Gruneisen, 
     Wavenumber_Reference, Volume_Reference, Aniso_LocGrad_Type
@@ -44,9 +44,9 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
                         7  for d**2G_dUdU only calculating the upper left 3x3 matrix daigonals
     """
     # Setting up program specific file endings and giving parameter files blank names to avoid errors
-    if Program == 'tink':
+    if Program == 'Tinker':
         file_ending = '.xyz'
-    elif Program == 'test':
+    elif Program == 'Test':
         file_ending = '.npy'
         keyword_parameters['Parameter_file'] = ''
 
@@ -141,8 +141,8 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
     :param StepWise_Vol_LowerFrac: lower bound on the fraction to compress to
     :param StepWise_Vol_UpperFrac: uppder gound on the fraction to expand to
     :param Coordinate_file: file containing the lattice parameters (and coordinates)
-    :param Program: 'tink' for Tinker Molecular Modeling
-                    'test' for a test run
+    :param Program: 'Tinker' for Tinker Molecular Modeling
+                    'Test' for a test run
     :param Temperature: array of temperatures in Kelvin
     :param Pressure: in atm
     :param Output: string for outputted files
@@ -150,8 +150,8 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
                    Stepwise Isotropic QHA w/ Gruneisen Parameter ('SiQg');
     :param molecules_in_coord: number of molecules in coordinate file
     :param Wavenum_Tol: lowest tollerable wavenumbers (some small negative wavenumbers are okay)
-    :param Statistical_mechanics: 'C' Classical mechanics
-                                  'Q' Quantum mechanics
+    :param Statistical_mechanics: 'Classical' Classical mechanics
+                                  'Quantum' Quantum mechanics
     :param keyword_parameters: Parameter_file, Gruneisen_Vol_FracStep
     
     Optional Parameters
@@ -159,10 +159,10 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
     Gruneisen_Vol_FracStep: volume fraction step used to determine the Gruneisen parameter 
     """
     # Setting file endings and determining how many wavenumbers there will be
-    if Program == 'tink':
+    if Program == 'Tinker':
         file_ending = '.xyz'
         number_of_wavenumbers = Pr.Tinker_atoms_per_molecule(Coordinate_file, 1)*3
-    elif Program == 'test':
+    elif Program == 'Test':
         file_ending = '.npy'
         number_of_wavenumbers = len(Wvn.Test_Wavenumber(Coordinate_file))
         keyword_parameters['Parameter_file'] = ''
@@ -261,8 +261,8 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
     """
     This function calculated the isotropic gradient for thermal expansion and returns the properties along that path
     :param Coordinate_file: file containing the lattice parameters (and coordinates)
-    :param Program: 'tink' for Tinker Molecular Modeling
-                    'test' for a test run
+    :param Program: 'Tinker' for Tinker Molecular Modeling
+                    'Test' for a test run
     :param molecules_in_coord: number of molecules in coordinate file
     :param Output: string for outputted files
     :param Method: Gradient Isotropic QHA ('GiQ');
@@ -271,8 +271,8 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
     :param Pressure: in atm
     :param LocGrd_Vol_FracStep:  isotropic volume fractional stepsize for local gradient
     :param LocGrd_Temp_step: temperature step size to use in local gradient 
-    :param Statistical_mechanics: 'C' Classical mechanics
-                                  'Q' Quantum mechanics
+    :param Statistical_mechanics: 'Classical' Classical mechanics
+                                  'Quantum' Quantum mechanics
     :param NumAnalysis_step: stepsize for numerical method
     :param NumAnalysis_method: 'RK4' Runge-Kutta 4th order
     :param keyword_parameters: Parameter_file, Gruneisen_Vol_FracStep
@@ -282,10 +282,10 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
     Gruneisen_Vol_FracStep: volume fraction step used to determine the Gruneisen parameter 
     """
     # Setting file endings and determining how many wavenumbers there will be
-    if Program == 'tink':
+    if Program == 'Tinker':
         file_ending = '.xyz'
         number_of_wavenumbers = Pr.Tinker_atoms_per_molecule(Coordinate_file, 1)*3
-    elif Program == 'test':
+    elif Program == 'Test':
         file_ending = '.npy'
         number_of_wavenumbers = len(Wvn.Test_Wavenumber(Coordinate_file))
         keyword_parameters['Parameter_file'] = ''
@@ -393,8 +393,8 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
     """
     This function calculated the anisotropic gradient for thermal expansion and returns the properties along that path
     :param Coordinate_file: file containing the lattice parameters (and coordinates)
-    :param Program: 'tink' for Tinker Molecular Modeling
-                    'test' for a test run
+    :param Program: 'Tinker' for Tinker Molecular Modeling
+                    'Test' for a test run
     :param molecules_in_coord: number of molecules in coordinate file
     :param Output: string for outputted files
     :param Method: Gradient Anisotropic QHA ('GaQ');
@@ -403,8 +403,8 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
     :param Pressure: in atm
     :param LocGrd_LatParam_FracStep: anisotropic crystal matrix fractional stepsize for local gradient
     :param LocGrd_Temp_step: temperature step size to use in local gradient 
-    :param Statistical_mechanics: 'C' Classical mechanics
-                                  'Q' Quantum mechanics
+    :param Statistical_mechanics: 'Classical' Classical mechanics
+                                  'Quantum' Quantum mechanics
     :param NumAnalysis_step: stepsize for numerical method
     :param NumAnalysis_method: 'RK4' Runge-Kutta 4th order
     :param Aniso_LocGrad_Type: 73 Hessians to calculate the complete anistropic gradient
@@ -420,10 +420,10 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
     #Optional: Parameter_file,
 
     # Setting file endings and determining how many wavenumbers there will be
-    if Program == 'tink':
+    if Program == 'Tinker':
         file_ending = '.xyz'
         number_of_wavenumbers = Pr.Tinker_atoms_per_molecule(Coordinate_file, 1)*3
-    elif Program == 'test':
+    elif Program == 'Test':
         file_ending = '.npy'
         number_of_wavenumbers = len(Wvn.Test_Wavenumber(Coordinate_file))
         keyword_parameters['Parameter_file'] = ''

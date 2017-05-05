@@ -2,19 +2,19 @@
 
 import os
 import numpy as np
-import Properties as Pr
+import ThermodynamicProperties as Pr
 import Wavenumbers as Wvn
 import Thermal_NumericalAnalysis as TNA
 
-def Lattice_Dynamics(Temperature = [0.0,25.0,50.0,75.0,100.0], Pressure = 1, Method = 'HA', 
-                     Output = 'out', Coordinate_file = 'molecule.xyz', Parameter_File = 'keyfile.key', 
+def Lattice_Dynamics(Temperature = [0.0,25.0,50.0,75.0,100.0], Pressure = 1, Method = 'HA', Program = 'Test',
+                     Output = 'out', Coordinate_file = 'molecule.xyz', Parameter_file = 'keyfile.key', 
                      molecules_in_coord = 1, properties_to_save = ['G','T'], NumAnalysis_method = 'RK4', 
                      NumAnalysis_step = 25.0,
                      LocGrd_Temp_step = 0.01, LocGrd_Vol_FracStep = 3e-02,
                      LocGrd_LatParam_FracStep = 5e-05, StepWise_Vol_StepFrac = 1.5e-3,
                      StepWise_Vol_LowerFrac = 0.97, StepWise_Vol_UpperFrac = 1.16,
                      Statistical_mechanics = 'Classical', Gruneisen_Vol_FracStep = 1.5e-3,
-                     Wavenum_Tol = -1, Gradient_MaxTemp = 300.0, Aniso_LocGrad_Type = '73'):
+                     Wavenum_Tol = -1, Gradient_MaxTemp = 300.0, Aniso_LocGrad_Type = '73', Gruneisen_order = 1):
 
     if Method == 'HA':
         # Running the Harmonic Approximation
@@ -89,16 +89,18 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--wavenum_tol', dest='Wavenum_Tol', default=-1.0, type=float, help='minimum negative wavenumber accepted (negative wavenumbers ignored)')
     parser.add_argument('-w', '--maxtemp', dest='Gradient_MaxTemp', default=300.0, type=float, help='maximum temperature change for gradient approach')
     parser.add_argument('-x', '--anisotropy', dest='Aniso_LocGrad_Type', choices=['73'], default='73',help='anisotropy approximation used') 
+    parser.add_argument('-y', '--order', dest='Gruneisen_order', choices=['First','Second'], default='First', help='Order of Gruneisen parameter')
 
     args = parser.parse_args()
 
     Lattice_Dynamics(Temperature = args.Temperature, 
                      Pressure = args.Pressure, 
                      Method = args.Method, 
+                     Program = args.Program,
                      Output = args.Output,
                      Coordinate_file = args.Coordinate_file, 
-                     Parameter_File = args.Parameter_file, 
-                     molecules_in_coord = molecules_in_coord,
+                     Parameter_file = args.Parameter_file, 
+                     molecules_in_coord = args.molecules_in_coord,
                      properties_to_save = args.properties_to_save,
                      NumAnalysis_method = args.NumAnalysis_method, 
                      NumAnalysis_step  = args.NumAnalysis_step,
@@ -110,5 +112,7 @@ if __name__ == '__main__':
                      StepWise_Vol_UpperFrac = args.StepWise_Vol_UpperFrac,
                      Statistical_mechanics  = args.Statistical_mechanics,
                      Gruneisen_Vol_FracStep = args.options.Gruneisen_Vol_FracStep,
-                     Wavenum_Tol = args.Wavenum_Tol, Gradient_MaxTemp = args.Gradient_MaxTemp,
-                     Aniso_LocGrad_Type = args.Aniso_LocGrad_Type)
+                     Wavenum_Tol = args.Wavenum_Tol, 
+                     Gradient_MaxTemp = args.Gradient_MaxTemp,
+                     Aniso_LocGrad_Type = args.Aniso_LocGrad_Type,
+                     Gruneisen_order = args.Gruneisen_order)
