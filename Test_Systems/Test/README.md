@@ -1,7 +1,11 @@
 This system is to provide fast and efficient results for testing new code.
 
-input.py: input file with necessary parameters to run a Harmonic approxiation, results are provide in Results/. To test other lattice dynamic calculations, change the Method parameter within the file. To run a lattice dynamic calculation just type:\
-python input.py
+input.py: input file with necessary parameters to run a harmonic approxiation. 
+Results are given in Results/. 
+
+To test other lattice dynamic calculations, change the `Method` parameter within the file. 
+
+To run a lattice dynamics calculation using this test just type: python input.py
 
 test.npy: contains an array of "lattice minimum" parameters for the test run.
     * Parameters are [a,b,c,alpha,beta,gamma] in 0-2 Angstroms and 3-5 in Degrees
@@ -17,6 +21,6 @@ If a different test is desired, two codes need to be edited:
        lattice minimum and changes each dependent on the input coordinate file.
 
 NSA: The wavenumbers need to be better designed here. I think you would have a better idea of how to do this, I want to keep
-     it consistent with the way the Tinker wavenumbers are called. We could utalize the Parameter_file variablet to input
+     it consistent with the way the Tinker wavenumbers are called. We could utilize the Parameter_file variablet to input
      wavenumbers or a function.
 
