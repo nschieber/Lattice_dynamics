@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import subprocess
+import numpy as np
+import pdb
 
 ##Input file
 
@@ -149,3 +150,13 @@ Run_LatticeDynamics.Lattice_Dynamics(Temperature = Temperature,
                                      Gradient_MaxTemp = Gradient_MaxTemp,
                                      Aniso_LocGrad_Type = Aniso_LocGrad_Type,
                                      Gruneisen_order = Gruneisen_order)
+
+# now, read the data?
+
+G_classical = np.load('out_GClassical_GiQ.npy')
+GiQ_WVN = np.load('out_GiQ_WVN.npy')
+GiQ_dV = np.load('out_GiQ_dV.npy')
+T_GiQ = np.load('out_T_GiQ.npy')
+VClassical_GiQ = np.load('out_VClassical_GiQ.npy')
+raw = np.load('out_raw.npy')
+uClassical_GiQ = np.load('out_uClassical_GiQ.npy')
