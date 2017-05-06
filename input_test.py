@@ -67,9 +67,9 @@ molecules_in_coord = 1
 # 'P' - Pressure [atm]
 # 'Av' - Helmholtz vibrational energy [kcal/mol]
 # 'V' - Volume [Ang.^3]
-# 'u' - Lattice parameters [Ang., Ang., Ang., Deg., Deg., Deg.]
+# 'h' - Lattice parameters [Ang., Ang., Ang., Deg., Deg., Deg.]
 # 'U' - Potential energy [kcal/mol]
-properties_to_save = ['G','u','V','T']
+properties_to_save = ['G','h','V','T','U']
 
 ### Gradient options ###
 ## Numerical analysis for thermal expansion
@@ -80,14 +80,14 @@ NumAnalysis_method = 'RK4'
 
 ## Stepsize numerical analysis
 # Right now only temperature is the only input option
-NumAnalysis_step = 5.0
+NumAnalysis_step = 1.0
 
 ## Local gradient presets
 # These options are tuned best for a wide array of options
 # Temperature stepsize
-LocGrd_Temp_step = 0.01
+LocGrd_Temp_step = 0.001
 # Isotropic volume fraction change
-LocGrd_Vol_FracStep = 3e-02
+LocGrd_Vol_FracStep = 0.0003
 # Anisotropic lattice fraction change
 LocGrd_LatParam_FracStep = 5e-02
 
@@ -152,7 +152,6 @@ Run_LatticeDynamics.Lattice_Dynamics(Temperature = Temperature,
                                      Aniso_LocGrad_Type = Aniso_LocGrad_Type,
                                      Gruneisen_order = Gruneisen_order)
 
-# now, read the data?
 props = dict()
 T = np.load(Output + '_' + 'T_' + Method + '.npy')  # no statistical mechanics method with T.
 for p in properties_to_save:
@@ -165,7 +164,7 @@ raw = np.load('out_raw.npy')
 
 pdb.set_trace()
 plt.figure(1)
-plt.plot(props['V'],T, label='Volume')
+plt.plot(T, props['V'], label='Volume')
 plt.xlabel('T (K)')
 plt.ylabel('Volume (A^3)')
 plt.title('V vs. T')
@@ -173,11 +172,26 @@ plt.legend()
 plt.show()
 
 plt.figure(2)
-plt.plot(props['G'],T, label='Volume')
+plt.plot(T, props['G'], label='G')
 plt.xlabel('T (K)')
 plt.ylabel('Free Energy (units)')
 plt.title('G vs. T')
 plt.legend()
 plt.show()
 
+plt.figure(3)
+plt.plot(T, props['U'], label='U')
+plt.xlabel('T (K)')
+plt.ylabel('Potential (units)')
+plt.title('U vs. T')
+plt.legend()
+plt.show()
 
+plt.figure(4)
+for i in range(0,3):
+    plt.plot(T, props['h'][:,i], label=i)
+plt.xlabel('T (K)')
+plt.ylabel('box vector (A)')
+plt.title('box vectors vs. T')
+plt.legend()
+plt.show()

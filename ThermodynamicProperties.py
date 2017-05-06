@@ -99,7 +99,7 @@ def Save_Properties(properties, Properties_to_save, Output, Method, Statistical_
                          'U' Potential energy
                          'Av' Helmholtz vibrational energy
                          'V' Volume
-                         'u' Lattice parameters
+                         'h' Lattice parameters
                          'S' Entropy
     Output = string to start the output of each file
     Method = Harmonic approximation ('HA');
@@ -125,8 +125,8 @@ def Save_Properties(properties, Properties_to_save, Output, Method, Statistical_
             np.save(Output + '_Av' + Statistical_mechanics + '_' + Method, properties[:, 4])
         if i == 'V':  # Volume
             np.save(Output + '_V' + Statistical_mechanics + '_' + Method, properties[:, 6])
-        if i == 'u':  # Lattice parameters
-            np.save(Output + '_u' + Statistical_mechanics + '_' + Method, properties[:, 7:13])
+        if i == 'h':  # Lattice parameters
+            np.save(Output + '_h' + Statistical_mechanics + '_' + Method, properties[:, 7:13])
         if i == 'S':  # Entropy
             np.save(Output + '_S' + Statistical_mechanics + '_' + Method, properties[:, 14])
 
