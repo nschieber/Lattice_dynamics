@@ -65,9 +65,9 @@ molecules_in_coord = 4
 # 'P' - Pressure [atm]
 # 'Av' - Helmholtz vibrational energy [kcal/mol]
 # 'V' - Volume [Ang.^3]
-# 'u' - Lattice parameters [Ang., Ang., Ang., Deg., Deg., Deg.]
+# 'h' - Lattice parameters [Ang., Ang., Ang., Deg., Deg., Deg.]
 # 'U' - Potential energy [kcal/mol]
-properties_to_save = ['G','u','V','T']
+properties_to_save = ['G','h','V','T']
 
 ### Gradient options ###
 ## Numerical analysis for thermal expansion

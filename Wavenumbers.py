@@ -114,18 +114,28 @@ def Tinker_Wavenumber(Coordinate_file, Parameter_file): #Was Tink_WVN
 ##########################################
 #                  Test                  #
 ##########################################
-def Test_Wavenumber(Coordinate_file):
+def Test_Wavenumber(Coordinate_file, function = 'Test2'):
     """
     This function takes a set of lattice parameters in a .npy file and returns a set of wavenumbers
-    Random funcitons can be input here to run different tests and implimented new methods efficiently
+    Random functions can be input here to run different tests and implimented new methods efficiently
 
     **Required Inputs
     Coordinate_file = File containing lattice parameters and atom coordinates
     """
-    wavenumbers = np.array([0.,0.,0.,52.,380.,1570.,3002.])
-    lattice_parameters= np.load(Coordinate_file)
-    for i in np.arange(3,len(wavenumbers[3:])+1):
-        wavenumbers[i] = wavenumbers[i]*(1/3.)*(((lattice_parameters[0]-16)/6)**2+((lattice_parameters[1]-12)/5)**2+((lattice_parameters[2]-23)/11)**2)
+
+    if function == 'Test1':
+        wavenumbers = np.array([0.,0.,0.,52.,380.,1570.,3002.])
+        lattice_parameters= np.load(Coordinate_file)
+        for i in np.arange(3,len(wavenumbers[3:])+3):  # probably should be 3?
+            wavenumbers[i] = wavenumbers[i]*(1/3.)*(((lattice_parameters[0]-16)/6)**2+((lattice_parameters[1]-12)/5)**2+((lattice_parameters[2]-23)/11)**2)
+    elif function == 'Test2':
+        wavenumbers = np.arange(1,200)
+        wavenumbers = wavenumbers**(5.0/3.0)  # get something in the right range = 400^(4/3) = 2941
+        wavenumbers[0:3] = [0,0,0]  # zero translation
+        lattice_parameters= np.load(Coordinate_file)
+        [refx,refy,refz] = [lattice_parameters[0]/10,lattice_parameters[1]/7,lattice_parameters[2]/12]
+        for i in range(3,len(wavenumbers[3:])+3):
+            wavenumbers[i] = wavenumbers[i]*(1.0/15.0)*(2*refx**(4.8) + 10*refy**(4.2) + 4*np.sin(2*np.pi*refx) + 3*refz**(4.8))
     return wavenumbers
 
 
