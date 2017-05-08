@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 import subprocess
+import sys
+sys.path.insert(0,'/home/nabraham/bin/Lattice_dynamics')
+import Run_LatticeDynamics
 
 ##Input file
 
@@ -125,7 +128,6 @@ Gruneisen_order = 'First'
 
 ## Run Program ## 
 
-import Run_LatticeDynamics
 
 Run_LatticeDynamics.Lattice_Dynamics(Temperature = Temperature, 
                                      Pressure = Pressure, 

@@ -3,6 +3,10 @@ import numpy as np
 import pdb
 import matplotlib.pyplot as plt
 
+import sys
+sys.path.insert(0,'/home/nabraham/bin/Lattice_dynamics')
+import Run_LatticeDynamics
+
 ##Input file
 
 ### General Inputs ###
@@ -50,7 +54,7 @@ Coordinate_file = 'test'
 
 ## Molecular parameters
 # Input file for particular program
-Coordinate_file = 'Test_systems/Test/test.npy'
+Coordinate_file = 'Test_Systems/Test/test.npy'
 
 ## Nuber of molecules
 #****I want to eventually replace this with a program specific code to look at connectivity
@@ -126,8 +130,6 @@ Aniso_LocGrad_Type = '73'
 Gruneisen_order = 'First'
 
 ## Run Program ## 
-
-import Run_LatticeDynamics
 
 Run_LatticeDynamics.Lattice_Dynamics(Temperature = Temperature, 
                                      Pressure = Pressure, 
