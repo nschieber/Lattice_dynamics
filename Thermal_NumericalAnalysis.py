@@ -50,7 +50,7 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
         file_ending = '.npy'
         keyword_parameters['Parameter_file'] = ''
 
-    RK_multiply = np.array([1./6.,1./3.,1./3.,1./6.])
+    RK_multiply = np.array([1./6., 1./3., 1./3., 1./6.])
 
     # Copying the coordinate file to a seperate file to work with
     os.system('cp ' + Coordinate_file + ' RK4' + file_ending)
@@ -76,32 +76,33 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
     for i in range(4):
         if (Method == 'GiQ') or (Method == 'GiQg'):
             RK_grad[i], wavenumbers_hold, volume_hold = Ex.Call_Expansion(Method, 'local_gradient', Program,
-                                                                         'RK4' + file_ending, molecules_in_coord,
-                                                                         Temperature=Temperature, Pressure=Pressure,
-                                                                         volume_fraction_change=keyword_parameters[
-                                                                              'LocGrd_Vol_FracStep'],
-                                                                         LocGrd_Temp_step=LocGrd_Temp_step,
-                                                                         Statistical_mechanics=Statistical_mechanics,
-                                                                         Parameter_file=
-                                                                         keyword_parameters['Parameter_file'],
-                                                                         Gruneisen=keyword_parameters['Gruneisen'],
-                                                                         Wavenumber_Reference=
-                                                                         keyword_parameters['Wavenumber_Reference'],
-                                                                         Volume_Reference=
-                                                                         keyword_parameters['Volume_Reference'])
+                                                                          'RK4' + file_ending, molecules_in_coord,
+                                                                          Temperature=Temperature, Pressure=Pressure,
+                                                                          volume_fraction_change=keyword_parameters[
+                                                                               'LocGrd_Vol_FracStep'],
+                                                                          LocGrd_Temp_step=LocGrd_Temp_step,
+                                                                          Statistical_mechanics=Statistical_mechanics,
+                                                                          Parameter_file=
+                                                                          keyword_parameters['Parameter_file'],
+                                                                          Gruneisen=keyword_parameters['Gruneisen'],
+                                                                          Wavenumber_Reference=
+                                                                          keyword_parameters['Wavenumber_Reference'],
+                                                                          Volume_Reference=
+                                                                          keyword_parameters['Volume_Reference'])
         elif (Method == 'GaQ') or (Method == 'GaQg'):
             RK_grad[i], wavenumbers_hold = Ex.Call_Expansion(Method, 'local_gradient', Program, 'RK4' + file_ending,
-                                                            molecules_in_coord, Temperature=Temperature,
-                                                            Pressure=Pressure, matrix_parameters_fraction_change=
-                                                            keyword_parameters['LocGrd_LatParam_FracStep'],
-                                                            LocGrd_Temp_step= LocGrd_Temp_step,
-                                                            Statistical_mechanics=Statistical_mechanics,
-                                                            Parameter_file=keyword_parameters['Parameter_file'],
-                                                            Gruneisen=keyword_parameters['Gruneisen'],
-                                                            Wavenumber_Reference=
-                                                            keyword_parameters['Wavenumber_Reference'],
-                                                            Volume_Reference=keyword_parameters['Volume_Reference'],
-                                                            Aniso_LocGrad_Type=keyword_parameters['Aniso_LocGrad_Type'])
+                                                             molecules_in_coord, Temperature=Temperature,
+                                                             Pressure=Pressure, matrix_parameters_fraction_change=
+                                                             keyword_parameters['LocGrd_LatParam_FracStep'],
+                                                             LocGrd_Temp_step= LocGrd_Temp_step,
+                                                             Statistical_mechanics=Statistical_mechanics,
+                                                             Parameter_file=keyword_parameters['Parameter_file'],
+                                                             Gruneisen=keyword_parameters['Gruneisen'],
+                                                             Wavenumber_Reference=
+                                                             keyword_parameters['Wavenumber_Reference'],
+                                                             Volume_Reference=keyword_parameters['Volume_Reference'],
+                                                             Aniso_LocGrad_Type=
+                                                             keyword_parameters['Aniso_LocGrad_Type'])
             volume_hold = 0.
         if i == 0:
             wavenumbers = wavenumbers_hold
@@ -113,7 +114,7 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
             elif (Method == 'GaQ') or (Method == 'GaQg'):
                 dcrystal_matrix = RK_grad[i]*temperature_steps[i+1]
                 volume_fraction_change = 0.
-            dvolume_or_matrix = RK_grad[i]*temperature_steps[i+1]
+            #dvolume_or_matrix = RK_grad[i]*temperature_steps[i+1]
             # Expanding the crystal to the next stepsize
             Ex.Call_Expansion(Method, 'expand', Program, Coordinate_file, molecules_in_coord,
                               Parameter_file=keyword_parameters['Parameter_file'], dcrystal_matrix=dcrystal_matrix,
@@ -178,7 +179,8 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
 
     # Setting parameters for the Gruneisen parameter and loading in previously found wavenumbers for SiQ
     if Method == 'SiQg':
-        Gruneisen, Wavenumber_Reference, Volume_Reference = Wvn.Call_Wavenumbers(Method,Coordinate_file=Coordinate_file,
+        Gruneisen, Wavenumber_Reference, Volume_Reference = Wvn.Call_Wavenumbers(Method,
+                                                                                 Coordinate_file=Coordinate_file,
                                                                                  Program=Program,
                                                                                  Gruneisen_Vol_FracStep=
                                                                                  keyword_parameters[
@@ -309,7 +311,8 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
 
     # Setting parameters for the Gruneisen parameter and loading in previously found wavenumbers for SiQ
     if Method == 'GiQg':
-        Gruneisen, Wavenumber_Reference, Volume_Reference = Wvn.Call_Wavenumbers(Method,Coordinate_file=Coordinate_file,
+        Gruneisen, Wavenumber_Reference, Volume_Reference = Wvn.Call_Wavenumbers(Method,
+                                                                                 Coordinate_file=Coordinate_file,
                                                                                  Program=Program,
                                                                                  Gruneisen_Vol_FracStep=
                                                                                  keyword_parameters[
@@ -368,12 +371,12 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
             volume = Pr.Volume(Program=Program,Coordinate_file=Output + '_' + Method + 'T' + str(temperature[i + 1]) +
                                file_ending)
             wavenumbers[i+1, 1:] = Wvn.Call_Wavenumbers(Method, Gruneisen=Gruneisen,
-                                                  Wavenumber_Reference=Wavenumber_Reference,
-                                                  Volume_Reference=Volume_Reference, New_Volume=volume,
-                                                  Parameter_file=keyword_parameters['Parameter_file'],
-                                                  Program=Program,
-                                                  Coordinate_file=Output + '_' + Method + 'T' + str(temperature[i + 1])
-                                                                  + file_ending)
+                                                        Wavenumber_Reference=Wavenumber_Reference,
+                                                        Volume_Reference=Volume_Reference, New_Volume=volume,
+                                                        Parameter_file=keyword_parameters['Parameter_file'],
+                                                        Program=Program,
+                                                        Coordinate_file=Output + '_' + Method + 'T' +
+                                                                        str(temperature[i + 1]) + file_ending)
             properties[i+1, :] = Pr.Properties(Output + '_' + Method + 'T' + str(temperature[i + 1]) + file_ending,
                                                wavenumbers[i + 1, 1:], temperature[i + 1], Pressure, Program,
                                                Statistical_mechanics, molecules_in_coord,
@@ -417,8 +420,6 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
     Optional Parameters
     Parameter_file: program specific file containing force field parameters
     """
-    #Optional: Parameter_file,
-
     # Setting file endings and determining how many wavenumbers there will be
     if Program == 'Tinker':
         file_ending = '.xyz'
@@ -497,8 +498,8 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
         if temperature[i + 1] == temperature[-1]:
             wavenumbers[i+1, 1:] = Wvn.Call_Wavenumbers(Method, Parameter_file=keyword_parameters['Parameter_file'],
                                                         Program=Program,
-                                                        Coordinate_file=Output + '_' + Method + 'T' +
-                                                                        str(temperature[i + 1]) + file_ending)
+                                                        Coordinate_file=(Output + '_' + Method +
+                                                                         'T' + str(temperature[i + 1]) + file_ending))
             properties[i+1, :] = Pr.Properties(Output + '_' + Method + 'T' + str(temperature[i + 1]) + file_ending,
                                                wavenumbers[i + 1, 1:], temperature[i + 1], Pressure, Program,
                                                Statistical_mechanics, molecules_in_coord,

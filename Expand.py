@@ -44,7 +44,6 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
     dcrystal_matrix: changes in the crystal matrix
     """
     # If there is no parameter_file, one is just inputted so there is no errors
-
     if 'Parmaeter_file' in keyword_parameters:
         keyword_parameters['Parameter_file'] == ''
 
@@ -85,12 +84,12 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
         elif Method == 'GaQ':
             anisotropic_local_gradient, wavenumbers = \
                 Anisotropic_Local_Gradient(Coordinate_file, Program, keyword_parameters['Temperature'],
-                                       keyword_parameters['Pressure'],
-                                       keyword_parameters['matrix_parameters_fraction_change'],
-                                       keyword_parameters['LocGrd_Temp_step'], molecules_in_coord,
-                                       keyword_parameters['Statistical_mechanics'], Method,
-                                       keyword_parameters['Aniso_LocGrad_Type'],
-                                       Parameter_file=keyword_parameters['Parameter_file'])
+                                           keyword_parameters['Pressure'],
+                                           keyword_parameters['matrix_parameters_fraction_change'],
+                                           keyword_parameters['LocGrd_Temp_step'], molecules_in_coord,
+                                           keyword_parameters['Statistical_mechanics'], Method,
+                                           keyword_parameters['Aniso_LocGrad_Type'],
+                                           Parameter_file=keyword_parameters['Parameter_file'])
             return anisotropic_local_gradient, wavenumbers
         elif Method == 'GaQg':
             print "This method is not written yet"
@@ -107,9 +106,9 @@ def Return_Tinker_Coordinates(Coordinate_file): # Was Tink_Cords
     Coordinate_file = Tinker .xyz file for a crystal
     """
     with open(Coordinate_file) as f:
-        #opening xyz coordinate file to expand
+        # Opening xyz coordinate file to expand
         coordinates = np.array(list(it.izip_longest(*[lines.split() for lines in f], fillvalue=' '))).T
-    coordinates = coordinates[2:,2:5].astype(float)
+    coordinates = coordinates[2:, 2:5].astype(float)
     return coordinates
 
 
@@ -128,19 +127,20 @@ def Output_Tinker_New_Coordinate_File(Coordinate_file, Parameter_file, coordinat
     Output = file name of new .xyz file
     """
     with open(Coordinate_file) as f:
-        #opening xyz coordinate file to expand
+        # Opening xyz coordinate file to expand
         coordinates_template = np.array(list(it.izip_longest(*[lines.split() for lines in f], fillvalue=' '))).T
 
     coordinates_template[2:, 2:5] = np.around(coordinates, decimals=8).astype('str')
     coordinates_template[1, :6] = lattice_parameters.astype(str)
     string_coordinates = ''
-    for i in range(len(coordinates_template[:,0])):
-        for j in range(len(coordinates_template[i,:])):
+    for i in range(len(coordinates_template[:, 0])):
+        for j in range(len(coordinates_template[i, :])):
             string_coordinates = string_coordinates + '    ' + coordinates_template[i, j]
         string_coordinates = string_coordinates + '\n'
 
     with open('%s_2' % Coordinate_file, 'w') as file_out:
         file_out.write(string_coordinates)
+
     os.system('minimize %s_2 -k %s 0.01 &> /dev/null' % (Coordinate_file, Parameter_file))
     os.system('mv %s_3 %s.xyz' % (Coordinate_file, Output))
     os.system('rm %s_2' % Coordinate_file)
@@ -149,7 +149,7 @@ def Output_Tinker_New_Coordinate_File(Coordinate_file, Parameter_file, coordinat
 ##########################################
 #                  TEST                  #
 ##########################################
-def Return_Test_Coordinates(): # was Test_Cords
+def Return_Test_Coordinates():
     """
     This funciton returns coordinates for the test system
     Because there are no real coordiantes, it just returns a matrix of ones as a holder for the coordinates
@@ -162,13 +162,13 @@ def Output_Test_New_Coordinate_File(lattice_parameters, Output):
     """
     This function saves the lattice parameters in a .npy file for the test Program
     """
-    np.save(Output,lattice_parameters)
+    np.save(Output, lattice_parameters)
 
 
 ##########################################
-#####      Assistant Functions       #####
+#          Assistant Functions           #
 ##########################################
-def Lattice_parameters_to_Crystal_matrix(lattice_parameters): # was MAT
+def Lattice_parameters_to_Crystal_matrix(lattice_parameters):
     """
     This function takes the lattice parameters and returns the crystal matrix
 
@@ -184,7 +184,7 @@ def Lattice_parameters_to_Crystal_matrix(lattice_parameters): # was MAT
     Vzz = np.sqrt(lattice_parameters[2]**2 - Vxz**2 - Vyz**2)
 
     # Combining the pieces of the matrix together
-    crystal_matrix = np.matrix([[Vxx,Vxy,Vxz],[0.,Vyy,Vyz],[0.,0.,Vzz]])
+    crystal_matrix = np.matrix([[Vxx, Vxy, Vxz], [0., Vyy, Vyz], [0., 0., Vzz]])
     return crystal_matrix
 
 
@@ -198,12 +198,18 @@ def Crystal_matrix_to_Lattice_parameters(crystal_matrix): # was params
                                               [0. ,0. ,Vzz]])
     """
     # Computing lattice parameters
-    a = np.absolute(crystal_matrix[0,0])
-    c = np.absolute(np.sqrt(crystal_matrix[2,2]**2 - crystal_matrix[0,2]**2 - crystal_matrix[1,2]**2))
-    beta = np.degrees(np.arccos(crystal_matrix[0,2]/float(c)))
-    alpha = np.degrees(np.arccos(crystal_matrix[1,2]/(c*np.sin(np.radians(beta)))))
-    gamma = np.degrees(np.arctan(crystal_matrix[1,1]/crystal_matrix[0,1]))
-    b = np.absolute(crystal_matrix[0,1]/np.cos(np.radians(gamma)))
+    a = np.sqrt(crystal_matrix[0, 0]**2)
+    b = np.sqrt(crystal_matrix[0, 1]**2 + crystal_matrix[1, 1]**2)
+    c = np.sqrt(crystal_matrix[0, 2]**2 + crystal_matrix[1, 2]**2 + crystal_matrix[2, 2]**2)
+    gamma = np.degrees(np.arccos(crystal_matrix[0, 1]/b))
+    beta = np.degrees(np.arccos(crystal_matrix[0, 2]/c))
+    alpha = np.degrees(np.arccos(crystal_matrix[1, 2]*np.sin(np.radians(gamma))/c + np.cos(np.radians(beta))*np.cos(np.radians(gamma))))
+#    a = crystal_matrix[0, 0]
+#    c = np.absolute(np.sqrt(crystal_matrix[2, 2]**2 - crystal_matrix[0, 2]**2 - crystal_matrix[1, 2]**2))
+#    beta = np.degrees(np.arccos(crystal_matrix[0, 2]/float(c)))
+#    alpha = np.degrees(np.arccos(crystal_matrix[1, 2]/(c*np.sin(np.radians(beta)))))
+#    gamma = np.degrees(np.arctan(crystal_matrix[1, 1]/crystal_matrix[0, 1]))
+#    b = np.absolute(crystal_matrix[0, 1]/np.cos(np.radians(gamma)))
 
     # Assuring that the parameters returned are all positive
     if alpha < 0.0:
@@ -214,11 +220,11 @@ def Crystal_matrix_to_Lattice_parameters(crystal_matrix): # was params
         gamma = 180. + gamma
 
     # Creating an array of lattice parameters
-    lattice_parameters = np.array([a,b,c,alpha,beta,gamma])
+    lattice_parameters = np.array([a, b, c, alpha, beta, gamma])
     return lattice_parameters
 
 
-def Isotropic_Change_Lattice_Parameters(volume_fraction_change, Program, Coordinate_file): # Was dvec_Iso
+def Isotropic_Change_Lattice_Parameters(volume_fraction_change, Program, Coordinate_file):
     """
     This function returns the change in lattice parameters for isotropic expansion/compression based off of a given 
     change in volume fraction
@@ -243,10 +249,7 @@ def Isotropic_Change_Lattice_Parameters(volume_fraction_change, Program, Coordin
     return dlattice_parameters
 
 
-
-#def dvec_Aniso():
-
-def Change_Crystal_Matrix(matrix_parameters_fraction_change, Program, Coordinate_file): #dMAT_Aniso
+def Change_Crystal_Matrix(matrix_parameters_fraction_change, Program, Coordinate_file):
     """
     This function returns a matrix of changes in crystal matrix parameters based off of a general fraction
     This function is used for local gradient anisotropic expansion, each change in parameter is tested separately in 
@@ -260,9 +263,9 @@ def Change_Crystal_Matrix(matrix_parameters_fraction_change, Program, Coordinate
     """
     # Calling the lattice parameters
     if Program == 'Tinker':
-      lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
+        lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
     elif Program == 'Test':
-      lattice_parameters = Pr.Test_Lattice_Parameters(Coordinate_file)
+        lattice_parameters = Pr.Test_Lattice_Parameters(Coordinate_file)
 
     # Computing the crystal matrix of the coordinate file and determining the change in parameters based off of the
     # fractional input
@@ -279,7 +282,7 @@ def Change_Crystal_Matrix(matrix_parameters_fraction_change, Program, Coordinate
     
 
 ##########################################
-#####        General Expansion       #####
+#            General Expansion           #
 ##########################################
 def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coord, Output, **keyword_parameters):
     # was Expand
@@ -321,19 +324,20 @@ def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coor
         atoms_per_molecule = len(coordinates[:, 0])/molecules_in_coord
 
         for i in range(int(molecules_in_coord)):
-            Coordinate_center_of_mass[i,:] = np.mean(coordinates[i*atoms_per_molecule:(i+1)*atoms_per_molecule], axis=0)
+            Coordinate_center_of_mass[i, :] = np.mean(coordinates[i*atoms_per_molecule:(i+1)*atoms_per_molecule],
+                                                      axis=0)
             coordinates[i*atoms_per_molecule:(i+1)*atoms_per_molecule] = \
                 np.subtract(coordinates[i*atoms_per_molecule:(i+1)*atoms_per_molecule], Coordinate_center_of_mass[i, :])
+
+        # Center of mass coordinates converted to fractional coordinates
         Coordinate_center_of_mass = np.dot(np.linalg.inv(crystal_matrix), Coordinate_center_of_mass.T).T
-
-
         if Expansion_type == 'lattice_parameters':
             lattice_parameters = lattice_parameters + keyword_parameters['dlattice_parameters']
             crystal_matrix = Lattice_parameters_to_Crystal_matrix(lattice_parameters)
         elif Expansion_type == 'crystal_matrix':
             crystal_matrix = crystal_matrix + keyword_parameters['dcrystal_matrix']
             lattice_parameters = Crystal_matrix_to_Lattice_parameters(crystal_matrix)
-
+            lattice_parameters = Crystal_matrix_to_Lattice_parameters(crystal_matrix)
         Coordinate_center_of_mass = np.dot(crystal_matrix, Coordinate_center_of_mass.T).T
         for i in range(int(molecules_in_coord)):
             coordinates[i*atoms_per_molecule:(i+1)*atoms_per_molecule] = \
@@ -410,13 +414,13 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
                                            Volume_Reference=keyword_parameters['Volume_Reference'],
                                            New_Volume=volume)
         wavenumbers_plus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
-                                           Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
-                                           Volume_Reference=keyword_parameters['Volume_Reference'],
-                                           New_Volume=volume + volume*LocGrd_Vol_FracStep)
-        wavenumbers_minus = Wvn.Call_Wavenumbers(Method,Gruneisen=keyword_parameters['Gruneisen'],
-                                           Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
-                                           Volume_Reference=keyword_parameters['Volume_Reference'],
-                                           New_Volume=volume - volume*LocGrd_Vol_FracStep)
+                                                Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
+                                                Volume_Reference=keyword_parameters['Volume_Reference'],
+                                                New_Volume=volume + volume*LocGrd_Vol_FracStep)
+        wavenumbers_minus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                                                 Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
+                                                 Volume_Reference=keyword_parameters['Volume_Reference'],
+                                                 New_Volume=volume - volume*LocGrd_Vol_FracStep)
 
     # If temperature is zero, we assume that the local gradient is the same at 0.1K
     if Temperature == 0.:
@@ -485,8 +489,6 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
     Wavenumber_reference: reference wavenumbers for the Gruneisen parameter
     Volume_reference: reference volume for the Gruneisen parameter
     """
-    #Aniso_Local_Grad
-
     # Determining the file ending of the coordinate files
     if Program == 'Tinker':
         file_ending = '.xyz'
@@ -643,8 +645,9 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
         # Removing excess files
         os.system('rm p' + file_ending + ' m' + file_ending)
 
-    #Putting together the total matrix for the changes in lattice parameters with temperatures
+    # Putting together the total matrix for the changes in lattice parameters with temperatures
     dCrystal_Matrix = -1*np.dot(np.linalg.pinv(dG_U), dG_UT)
+
     if out_vector_size == 6:
         dCrystal_Matrix = np.matrix([[dCrystal_Matrix[0], dCrystal_Matrix[3], dCrystal_Matrix[4]],
                                      [0., dCrystal_Matrix[1], dCrystal_Matrix[5]], 

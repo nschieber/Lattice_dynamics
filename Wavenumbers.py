@@ -134,6 +134,7 @@ def Test_Wavenumber(Coordinate_file, function = 'Test2'):
         wavenumbers[0:3] = [0,0,0]  # zero translation
         lattice_parameters= np.load(Coordinate_file)
         [refx,refy,refz] = [lattice_parameters[0]/10,lattice_parameters[1]/7,lattice_parameters[2]/12]
+#        [refx,refy,refz] = [lattice_parameters[0]/5,lattice_parameters[1]/6,lattice_parameters[2]/8]
         for i in range(3,len(wavenumbers[3:])+3):
             wavenumbers[i] = wavenumbers[i]*(1.0/15.0)*(2*refx**(4.8) + 10*refy**(4.2) + 4*np.sin(2*np.pi*refx) + 3*refz**(4.8))
     return wavenumbers

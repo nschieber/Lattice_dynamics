@@ -47,11 +47,11 @@ Statistical_mechanics = 'Classical'
 
 ## Structure
 # Coordinate file
-Coordinate_file = 'Test_Systems/Tinker/hxacan_p2/molecule.xyz'
+Coordinate_file = 'molecule.xyz'
 
 ## Molecular parameters
 # Input file for particular program
-Parameter_file = 'Test_Systems/Tinker/hxacan_p2/keyfile.key'
+Parameter_file = 'keyfile.key'
 
 ## Nuber of molecules
 #****I want to eventually replace this with a program specific code to look at connectivity
@@ -118,7 +118,7 @@ Gradient_MaxTemp = 100.0
 # '73'   - Compute every vibrational spectra for local gradient
 # '25'   - For d**2G/dUdU compute vibrational spectra for the diagonal and the off diagonals for the upper left 3x3
 # matrix
-Aniso_LocGrad_Type = '73'
+Aniso_LocGrad_Type = 73
 
 # Gruneisen Order
 # Option - Description
