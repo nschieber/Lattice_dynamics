@@ -195,7 +195,7 @@ def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, 
     return Gruneisen, Wavenumber_Reference, Volume_Reference
 
 
-def Get_Iso_Gruneisen_Wavenumbers(Gruneisen, Wavenumber_Reference, Volume_Reference, New_Volume): #Was Iso_GRU_New
+def Get_Iso_Gruneisen_Wavenumbers(Gruneisen, Wavenumber_Reference, Volume_Reference, New_Volume): 
     """
     This function calculates new wavenumber for an isotropically expanded strucutre using the gruneisen parameter
     ******Eventually! Impliment a second order Gruneisen parameter in here
