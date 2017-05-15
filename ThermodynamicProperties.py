@@ -9,7 +9,7 @@ import itertools as it
 #           Export PROPERTIES            #
 ##########################################
 def Properties(Coordinate_file, wavenumbers, Temperature, Pressure, Program, Statistical_mechanics, molecules_in_coord,
-            **keyword_parameters):  # Was PROP
+               **keyword_parameters):
     """
     Function to calculate all properties for a single temperature and pressure
 
@@ -114,20 +114,31 @@ def Save_Properties(properties, Properties_to_save, Output, Method, Statistical_
     """
     for i in Properties_to_save:
         if i == 'T':  # Temperature
+            print "   ... Saving temperature in: " + Output + "_T_" + Method +".npy"
             np.save(Output + '_T_' + Method, properties[:, 0])
         if i == 'P':  # Pressure
+            print "   ... Saving Pressure in: " + Output + "_P_" + Method + ".npy"
             np.save(Output + '_P_' + Method, properties[:, 1])
         if i == 'G':  # Gibbs free energy
+            print "   ... Saving Gibbs free energy in: " + Output + "_G" + Statistical_mechanics + "_" + Method +\
+                  ".npy"
             np.save(Output + '_G' + Statistical_mechanics + '_' + Method, properties[:, 2])
         if i == 'U':  # Potential energy
+            print "   ... Saving potential energy in: " + Output + "_U" + Statistical_mechanics + "_" + Method + ".npy"
             np.save(Output + '_U' + Statistical_mechanics + '_' + Method, properties[:, 3])
         if i == 'Av':  # Helmholtz vibrational energy
+            print "   ... Saving vibrational Helmholtz free energy in: " + Output + "_Av" + Statistical_mechanics + "_"\
+                  + Method + ".npy"
             np.save(Output + '_Av' + Statistical_mechanics + '_' + Method, properties[:, 4])
         if i == 'V':  # Volume
+            print "   ... Saving volume in: " + Output + "_V" + Statistical_mechanics + "_" + Method + ".npy"
             np.save(Output + '_V' + Statistical_mechanics + '_' + Method, properties[:, 6])
         if i == 'h':  # Lattice parameters
+            print "   ... Saving lattice parameters in: " + Output + "_h" + Statistical_mechanics + "_" + Method +\
+                  ".npy"
             np.save(Output + '_h' + Statistical_mechanics + '_' + Method, properties[:, 7:13])
         if i == 'S':  # Entropy
+            print "   ... Saving entropy in: " + Output + "_S" + Statistical_mechanics + "_" + Method + ".npy"
             np.save(Output + '_S' + Statistical_mechanics + '_' + Method, properties[:, 14])
 
 
@@ -212,7 +223,8 @@ def Test_Lattice_Parameters(Coordinate_file):  # Was Test_LATVEC
 ##########################################
 def Volume(**keyword_parameters):  # Was V
     """
-    This function either takes a coordinate file and determines the structures volume or takes the lattice parameters to calculate the volume
+    This function either takes a coordinate file and determines the structures volume or takes the lattice parameters to
+     calculate the volume
 
     **Optional Inputs
     lattice_parameters = crystal lattice parameters as an array [a,b,c,alpha,beta,gamma]
@@ -252,7 +264,7 @@ def Classical_Vibrational_A(Temperature, wavenumbers):  # Was vib_Ac
     c = 2.998 * 10 ** 10  # Speed of light in cm/s
     h = 2.520 * 10 ** (-35)  # Reduced Plank's constant in cal*s
     k = 3.2998 * 10 ** (-24)  # Boltzmann constant in cal*K
-    Na = 6.022 * 10 ** (23)  # Avogadro's number
+    Na = 6.022 * 10 ** 23  # Avogadro's number
     beta = 1 / (k * Temperature)
     wavenumbers = np.sort(wavenumbers)
     A = []
@@ -277,7 +289,7 @@ def Quantum_Vibrational_A(Temperature, wavenumbers):  # Was vib_Aq
     c = 2.998 * 10 ** 10  # Speed of light in cm/s
     h = 2.520 * 10 ** (-35)  # Reduced Plank's constant in cal*s
     k = 3.2998 * 10 ** (-24)  # Boltzmann constant in cal*K
-    Na = 6.022 * 10 ** (23)  # Avogadro's number
+    Na = 6.022 * 10 ** 23  # Avogadro's number
     beta = 1 / (k * Temperature)
     wavenumbers = np.sort(wavenumbers)
     A = []
@@ -302,7 +314,7 @@ def Classical_Vibrational_S(Temperature, wavenumbers):  # Was Vib_Sc
     c = 2.998 * 10 ** 10  # Speed of light in cm/s
     h = 2.520 * 10 ** (-35)  # Reduced Plank's constant in cal*s
     k = 3.2998 * 10 ** (-24)  # Boltzmann constant in cal*K
-    Na = 6.022 * 10 ** (23)  # Avogadro's number
+    Na = 6.022 * 10 ** 23  # Avogadro's number
     beta = 1 / (k * Temperature)
     wavenumbers = np.sort(wavenumbers)
     S = []
@@ -327,7 +339,7 @@ def Quantum_Vibrational_S(Temperature, wavenumbers):
     c = 2.998 * 10 ** 10  # Speed of light in cm/s
     h = 2.520 * 10 ** (-35)  # Reduced Plank's constant in cal*s
     k = 3.2998 * 10 ** (-24)  # Boltzmann constant in cal*K
-    Na = 6.022 * 10 ** (23)  # Avogadro's number
+    Na = 6.022 * 10 ** 23  # Avogadro's number
     beta = 1 / (k * Temperature)
     wavenumbers = np.sort(wavenumbers)
     S = []
@@ -377,5 +389,5 @@ def Gibbs_Free_Energy(Temperature, Pressure, Program, wavenumbers, Coordinate_fi
         A = Quantum_Vibrational_A(Temperature, wavenumbers) / molecules_in_coord
 
     # Gibbs Free energy
-    G = U + A + Pressure * volume * (6.022 * 10 ** 23) * (2.390 * 10 ** (-29))/ molecules_in_coord
+    G = U + A + Pressure * volume * (6.022 * 10 ** 23) * (2.390 * 10 ** (-29)) / molecules_in_coord
     return G

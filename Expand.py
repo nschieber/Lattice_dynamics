@@ -30,7 +30,7 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
     
     Optional Parameters
     Parameter_file: program specific file containing force field parameters
-    volume_fraction_chagne: fractional volumetric step size (either for numerical gradient or amount to expand by).
+    volume_fraction_change: fractional volumetric step size (either for numerical gradient or amount to expand by).
     matrix_parameters_fraction_change: fraction to change crystal matrix parameter by
     Temperature: in Kelvin
     Pressure: in atm

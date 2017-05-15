@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import numpy as np
 import ThermodynamicProperties as Pr
 import Wavenumbers as Wvn
@@ -17,50 +18,72 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1, Met
                      Wavenum_Tol=-1, Gradient_MaxTemp=300.0, Aniso_LocGrad_Type='73', Gruneisen_order=1):
 
     if Method == 'HA':
+        print "Performing Harmonic Approximation"
         # Running the Harmonic Approximation
         if os.path.isfile(Output + '_' + Method + '_WVN.npy'):
             wavenumbers = np.load(Output + '_' + Method + '_WVN.npy')
+            print "   Importing wavenumbers from:" + Output + '_' + Method + '_WVN.npy'
         else:
+            print "   Computing wavenumbers of coordinate file"
             wavenumbers = Wvn.Call_Wavenumbers(Method, Program=Program, Coordinate_file=Coordinate_file,
                                                Parameter_file=Parameter_file)
             np.save(Output + '_' + Method + '_WVN', wavenumbers)
+
         if all(wavenumbers > Wavenum_Tol):
+            print "   All wavenumbers are greater than tolerance of: " + str(Wavenum_Tol) + " cm^-1"
             properties = Pr.Properties_with_Temperature(Coordinate_file, wavenumbers, Temperature, Pressure, Program,
                                                         Statistical_mechanics, molecules_in_coord,
                                                         Parameter_file=Parameter_file)
-            np.save(Output+'_raw', properties)
+            print "   All properties have been saved in " + Output + "_raw.npy"
+            np.save(Output + '_raw', properties)
+            print "   Saving user specified properties in indipendent files:"
             Pr.Save_Properties(properties, properties_to_save, Output, Method, Statistical_mechanics)
+            print "Harmonic Approximation is complete!"
     else:
         if os.path.isdir('Cords') != True:
+            print "Creating directory 'Cords/' to store structures along Gibbs free energy path"
             os.system('mkdir Cords')
 
     if (Method == 'SiQ') or (Method == 'SiQg'):
         # Stepwise Isotropic QHA
-        properties = TNA.Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, StepWise_Vol_UpperFrac,
-                                                      Coordinate_file, Program, Temperature, Pressure, Output, Method,
-                                                      molecules_in_coord, Wavenum_Tol, Statistical_mechanics,
-                                                      Parameter_file=Parameter_file,
+        print "Performing Stepwise Isotropic Quasi-Harmonic Approximation"
+        properties = TNA.Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac,
+                                                      StepWise_Vol_UpperFrac, Coordinate_file, Program, Temperature,
+                                                      Pressure, Output, Method, molecules_in_coord, Wavenum_Tol,
+                                                      Statistical_mechanics, Parameter_file=Parameter_file,
                                                       Gruneisen_Vol_FracStep=Gruneisen_Vol_FracStep)
+        print "   Saving user specified properties in indipendent files:"
         Pr.Save_Properties(properties, properties_to_save, Output, Method, Statistical_mechanics)
+        print "Stepwise Isotropic Quasi-Harmonic Approximation is complete!"
 
     if (Method == 'GiQ') or (Method == 'GiQg'):
         # Gradient Isotropic QHA
+        print "Performing Gradient Isotropic Quasi-Harmonic Approximation"
         properties = TNA.Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, Output, Method,
                                                       Gradient_MaxTemp, Pressure, LocGrd_Vol_FracStep, LocGrd_Temp_step,
                                                       Statistical_mechanics, NumAnalysis_step, NumAnalysis_method,
                                                       Parameter_file=Parameter_file,
                                                       Gruneisen_Vol_FracStep=Gruneisen_Vol_FracStep)
+        properties = TNA.Cubic_Hermite_Spline(Output, Method, Program, properties, Temperature, molecules_in_coord,
+                                              Pressure, Statistical_mechanics, Parameter_file=Parameter_file)
+        print "   Saving user specified properties in indipendent files:"
         Pr.Save_Properties(properties, properties_to_save, Output, Method, Statistical_mechanics)
+        print "Gradient Isotropic Quasi-Harmonic Approximation is complete!"
 
     if (Method == 'GaQ') or (Method == 'GaQg'):
+        print "Performing Gradient Anisotropic Quasi-Harmonic Approximation"
         properties = TNA.Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, Output, Method,
                                                        Gradient_MaxTemp, Pressure, LocGrd_LatParam_FracStep,
                                                        LocGrd_Temp_step, Statistical_mechanics, NumAnalysis_step,
                                                        NumAnalysis_method, Aniso_LocGrad_Type,
                                                        Parameter_file=Parameter_file)
+        properties = TNA.Cubic_Hermite_Spline(Output, Method, Program, properties, Temperature, molecules_in_coord,
+                                              Pressure, Statistical_mechanics, Parameter_file=Parameter_file)
+        print "   Saving user specified properties in indipendent files:"
         Pr.Save_Properties(properties, properties_to_save, Output, Method, Statistical_mechanics)
+        print "Gradient Anisotropic Quasi-Harmonic Approximation is complete!"
 
-         
+
 if __name__ == '__main__':
     
     import argparse 
