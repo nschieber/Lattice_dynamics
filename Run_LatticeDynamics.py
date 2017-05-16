@@ -62,10 +62,9 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1, Met
         properties = TNA.Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, Output, Method,
                                                       Gradient_MaxTemp, Pressure, LocGrd_Vol_FracStep, LocGrd_Temp_step,
                                                       Statistical_mechanics, NumAnalysis_step, NumAnalysis_method,
+                                                      Temperature,
                                                       Parameter_file=Parameter_file,
                                                       Gruneisen_Vol_FracStep=Gruneisen_Vol_FracStep)
-        properties = TNA.Cubic_Hermite_Spline(Output, Method, Program, properties, Temperature, molecules_in_coord,
-                                              Pressure, Statistical_mechanics, Parameter_file=Parameter_file)
         print "   Saving user specified properties in indipendent files:"
         Pr.Save_Properties(properties, properties_to_save, Output, Method, Statistical_mechanics)
         print "Gradient Isotropic Quasi-Harmonic Approximation is complete!"
@@ -75,10 +74,8 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1, Met
         properties = TNA.Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, Output, Method,
                                                        Gradient_MaxTemp, Pressure, LocGrd_LatParam_FracStep,
                                                        LocGrd_Temp_step, Statistical_mechanics, NumAnalysis_step,
-                                                       NumAnalysis_method, Aniso_LocGrad_Type,
+                                                       NumAnalysis_method, Aniso_LocGrad_Type, Temperature,
                                                        Parameter_file=Parameter_file)
-        properties = TNA.Cubic_Hermite_Spline(Output, Method, Program, properties, Temperature, molecules_in_coord,
-                                              Pressure, Statistical_mechanics, Parameter_file=Parameter_file)
         print "   Saving user specified properties in indipendent files:"
         Pr.Save_Properties(properties, properties_to_save, Output, Method, Statistical_mechanics)
         print "Gradient Anisotropic Quasi-Harmonic Approximation is complete!"

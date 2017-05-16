@@ -42,6 +42,7 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
     Volume_reference: reference volume for the Gruneisen parameter
     Output: string to name expanded coordinate file
     dcrystal_matrix: changes in the crystal matrix
+    crystal_matrix_reference
     """
     # If there is no parameter_file, one is just inputted so there is no errors
     if 'Parmaeter_file' in keyword_parameters:
@@ -92,7 +93,18 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
                                            Parameter_file=keyword_parameters['Parameter_file'])
             return anisotropic_local_gradient, wavenumbers
         elif Method == 'GaQg':
-            print "This method is not written yet"
+            anisotropic_local_gradient, wavenumbers = \
+                Anisotropic_Local_Gradient(Coordinate_file, Program, keyword_parameters['Temperature'],
+                                           keyword_parameters['Pressure'],
+                                           keyword_parameters['matrix_parameters_fraction_change'],
+                                           keyword_parameters['LocGrd_Temp_step'], molecules_in_coord,
+                                           keyword_parameters['Statistical_mechanics'], Method,
+                                           keyword_parameters['Aniso_LocGrad_Type'],
+                                           Parameter_file=keyword_parameters['Parameter_file'],
+                                           Gruneisen=keyword_parameters['Gruneisen'],
+                                           Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
+                                           Crystal_matrix_Reference=keyword_parameters['Crystal_matrix_Reference'])
+            return anisotropic_local_gradient, wavenumbers
 
 
 ##########################################
@@ -487,7 +499,7 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
     Parameter_file: program specific file containing force field parameters
     Gruneisen: isotropic Gruneisen parameter
     Wavenumber_reference: reference wavenumbers for the Gruneisen parameter
-    Volume_reference: reference volume for the Gruneisen parameter
+    Crystal_matrix_Reference
     """
     # Determining the file ending of the coordinate files
     if Program == 'Tinker':
@@ -529,15 +541,21 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
     # Setting the order of lattice parameter to perform (diagonals first followed by off diagonals)
     matrix_order = np.matrix([[0, 0], [1, 1], [2, 2], [0, 1], [0, 2], [1, 2]])
 
-    # Retrieving the wavenumbers of the initial structure
+    # Retrieving the wavenumbers and crystal matrix of the initial structure
     if Method == 'GaQ':
         if Program == 'Tinker':
             wavenumbers = Wvn.Tinker_Wavenumber(Coordinate_file, Parameter_file=keyword_parameters['Parameter_file'])
         elif Program == 'Test':
             wavenumbers = Wvn.Test_Wavenumber(Coordinate_file)
-    else:
-        print "ANISOTRPIC GRUNEISEN PARAMERATER NOT YET IMPLIMENTED"
-        sys.exit()
+    elif Method == 'GaQg':
+        if Program == 'Tinker':
+            crystal_matrix = Lattice_parameters_to_Crystal_matrix(Pr.Tinker_Lattice_Parameters(Coordinate_file))
+        elif Program == 'Test':
+            crystal_matrix = Lattice_parameters_to_Crystal_matrix(Pr.Test_Lattice_Parameters(Coordinate_file))
+        wavenumbers = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                                           Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
+                                           Crystal_matrix_Reference=keyword_parameters['Crystal_matrix_Reference'],
+                                           New_Crystal_matrix=crystal_matrix)
 
     # If temperature is zero, we assume that the local gradient is the same at 0.1K
     if Temperature == 0.:
@@ -562,8 +580,17 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
                                                     Parameter_file=keyword_parameters['Parameter_file'])
             wavenumbers_minus = Wvn.Call_Wavenumbers(Method, Coordinate_file='m'+file_ending, Program=Program,
                                                      Parameter_file=keyword_parameters['Parameter_file'])
-        else:
-            print "aniso not done for gruneisen yet"
+        elif Method == 'GaQg':
+            wavenumbers_plus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                                                    Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
+                                                    Crystal_matrix_Reference=
+                                                    keyword_parameters['Crystal_matrix_Reference'],
+                                                    New_Crystal_matrix=crystal_matrix + dcrystal_matrix)
+            wavenumbers_minus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                                                     Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
+                                                     Crystal_matrix_Reference=
+                                                     keyword_parameters['Crystal_matrix_Reference'],
+                                                     New_Crystal_matrix=crystal_matrix - dcrystal_matrix)
 
         # Calculating the diagonal and vector element
         dG_UT[i] = (Pr.Gibbs_Free_Energy(Temperature + LocGrd_Temp_step, Pressure, Program, wavenumbers_plus,
@@ -622,8 +649,35 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
                     wavenumbers_minus_plus = Wvn.Call_Wavenumbers(Method, Coordinate_file='mp' + file_ending,
                                                                   Program=Program,
                                                                   Parameter_file=keyword_parameters['Parameter_file'])
-                else:
-                    print "aniso not done for gruneisen yet"
+                elif Method == 'GaQg':
+                    wavenumbers_plus_plus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                                                                 Wavenumber_Reference=
+                                                                 keyword_parameters['Wavenumber_Reference'],
+                                                                 Crystal_matrix_Reference=
+                                                                 keyword_parameters['Crystal_matrix_Reference'],
+                                                                 New_Crystal_matrix=
+                                                                 crystal_matrix + dcrystal_matrix + dcrystal_matrix_2)
+                    wavenumbers_plus_minus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                                                                  Wavenumber_Reference=
+                                                                  keyword_parameters['Wavenumber_Reference'],
+                                                                  Crystal_matrix_Reference=
+                                                                  keyword_parameters['Crystal_matrix_Reference'],
+                                                                  New_Crystal_matrix=
+                                                                  crystal_matrix + dcrystal_matrix - dcrystal_matrix_2)
+                    wavenumbers_minus_minus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                                                                   Wavenumber_Reference=
+                                                                   keyword_parameters['Wavenumber_Reference'],
+                                                                   Crystal_matrix_Reference=
+                                                                   keyword_parameters['Crystal_matrix_Reference'],
+                                                                   New_Crystal_matrix=
+                                                                   crystal_matrix - dcrystal_matrix - dcrystal_matrix_2)
+                    wavenumbers_minus_plus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                                                                  Wavenumber_Reference=
+                                                                  keyword_parameters['Wavenumber_Reference'],
+                                                                  Crystal_matrix_Reference=
+                                                                  keyword_parameters['Crystal_matrix_Reference'],
+                                                                  New_Crystal_matrix=
+                                                                  crystal_matrix - dcrystal_matrix + dcrystal_matrix_2)
 
                 # Calculating the diagonal elements of dG_U
                 dG_U[i, j] = (Pr.Gibbs_Free_Energy(Temperature, Pressure, Program, wavenumbers_plus_plus,

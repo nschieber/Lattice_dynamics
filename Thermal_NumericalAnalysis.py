@@ -42,6 +42,7 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
                         19 for d**2G_dhdh only calculating the uppder left 3x3 matrix
                         13 for d**2G_dhdh only calculating the diagonals
                         7  for d**2G_dhdh only calculating the upper left 3x3 matrix daigonals
+    Crystal_matrix_Reference:
     """
     # Setting up program specific file endings and giving parameter files blank names to avoid errors
     if Program == 'Tinker':
@@ -65,12 +66,14 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
             keyword_parameters['Gruneisen'] = 0.
             keyword_parameters['Wavenumber_Reference'] = 0.
             keyword_parameters['Volume_Reference'] = 0.
+            keyword_parameters['Crystal_matrix_Reference'] = 0.
     elif (Method == 'GaQ') or (Method == 'GaQg'):
         RK_grad = np.zeros((4, 3, 3))
         if Method == 'GaQ':
             keyword_parameters['Gruneisen'] = 0.
             keyword_parameters['Wavenumber_Reference'] = 0.
             keyword_parameters['Volume_Reference'] = 0.
+            keyword_parameters['Crystal_matrix_Reference'] = 0.
 
     # Calculating the RK gradients for the overall numerical gradient
     for i in range(4):
@@ -94,13 +97,14 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
                                                              molecules_in_coord, Temperature=Temperature,
                                                              Pressure=Pressure, matrix_parameters_fraction_change=
                                                              keyword_parameters['LocGrd_LatParam_FracStep'],
-                                                             LocGrd_Temp_step= LocGrd_Temp_step,
+                                                             LocGrd_Temp_step=LocGrd_Temp_step,
                                                              Statistical_mechanics=Statistical_mechanics,
                                                              Parameter_file=keyword_parameters['Parameter_file'],
                                                              Gruneisen=keyword_parameters['Gruneisen'],
                                                              Wavenumber_Reference=
                                                              keyword_parameters['Wavenumber_Reference'],
-                                                             Volume_Reference=keyword_parameters['Volume_Reference'],
+                                                             Crystal_matrix_Reference=
+                                                             keyword_parameters['Crystal_matrix_Reference'],
                                                              Aniso_LocGrad_Type=
                                                              keyword_parameters['Aniso_LocGrad_Type'])
             volume_hold = 0.
@@ -115,7 +119,6 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
             elif (Method == 'GaQ') or (Method == 'GaQg'):
                 dcrystal_matrix = RK_grad[i]*temperature_steps[i+1]
                 volume_fraction_change = 0.
-            #dvolume_or_matrix = RK_grad[i]*temperature_steps[i+1]
             # Expanding the crystal to the next stepsize
             Ex.Call_Expansion(Method, 'expand', Program, Coordinate_file, molecules_in_coord,
                               Parameter_file=keyword_parameters['Parameter_file'], dcrystal_matrix=dcrystal_matrix,
@@ -152,6 +155,10 @@ def Cubic_Hermite_Spline(Output, Method, Program, properties, Temperature, molec
     
     Optional Parameters
     Parameter_file: program specific file containing force field parameters
+    Gruneisen
+    Wavenumber_Reference
+    Volume_Reference
+    Crystal_matrix_Reference
     """
     print "Using cubic spline to determine intermediate temperature steps."
     # Setting file endings
@@ -172,7 +179,7 @@ def Cubic_Hermite_Spline(Output, Method, Program, properties, Temperature, molec
         tangent = np.load(Output + '_dh_' + Method + '.npy')[:, :, 4:]
 
     for i in range(len(Temperature)):
-        if any(Temperature[i] != properties[:, 0]):
+        if any(Temperature[i] == properties[:, 0]) != True:
             print "   Adding in temperature point: " + str(Temperature[i]) + " K"
             for j in range(len(properties[:, 0])):
                 if properties[j, 0] < Temperature[i]:
@@ -197,9 +204,15 @@ def Cubic_Hermite_Spline(Output, Method, Program, properties, Temperature, molec
                               Output=Output + '_' + Method + 'T' + str(Temperature[i]))
 
             wavenumbers = Wvn.Call_Wavenumbers(Method, Program=Program,
-                                               Coordinate_file=Output + '_' + Method + 'T' + str(Temperature[i]) +
-                                                               file_ending,
-                                               Parameter_file=keyword_parameters['Parameter_file'])
+                                               Coordinate_file=Output + '_' + Method + 'T' + str(Temperature[i])
+                                                               + file_ending,
+                                               Parameter_file=keyword_parameters['Parameter_file'],
+                                               Gruneisen=keyword_parameters['Gruneisen'],
+                                               Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
+                                               Volume_Reference=keyword_parameters['Volume_Reference'],
+                                               Crystal_matrix_Reference=keyword_parameters['Crystal_matrix_Reference'],
+                                               New_Crystal_matrix=new_point)
+
             properties = np.insert(properties, upper_bound, Pr.Properties(Output + '_' + Method + 'T' +
                                                                           str(Temperature[i]) + file_ending,
                                                                           wavenumbers, Temperature[i], Pressure,
@@ -362,7 +375,7 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
 ##########################################
 def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, Output, Method, Gradient_MaxTemp,
                                  Pressure, LocGrd_Vol_FracStep, LocGrd_Temp_step, Statistical_mechanics,
-                                 NumAnalysis_step, NumAnalysis_method, **keyword_parameters):
+                                 NumAnalysis_step, NumAnalysis_method, Temperature, **keyword_parameters):
     """
     This function calculated the isotropic gradient for thermal expansion and returns the properties along that path
     :param Coordinate_file: file containing the lattice parameters (and coordinates)
@@ -500,6 +513,11 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
             np.save(Output + '_dV_' + Method, volume_gradient)
 
     # Saving the raw data before minimizing
+    properties = Cubic_Hermite_Spline(Output, Method, Program, properties, Temperature, molecules_in_coord,
+                                      Pressure, Statistical_mechanics,
+                                      Parameter_file=keyword_parameters['Parameter_file'],
+                                      Gruneisen=Gruneisen, Wavenumber_Reference=Wavenumber_Reference,
+                                      Volume_Reference=Volume_Reference)
     print "   All properties have been saved in " + Output + "_raw.npy"
     np.save(Output+'_raw', properties)
     return properties
@@ -509,7 +527,8 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
 ##########################################
 def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, Output, Method, Gradient_MaxTemp,
                                   Pressure, LocGrd_LatParam_FracStep, LocGrd_Temp_step, Statistical_mechanics,
-                                  NumAnalysis_step, NumAnalysis_method, Aniso_LocGrad_Type, **keyword_parameters):
+                                  NumAnalysis_step, NumAnalysis_method, Aniso_LocGrad_Type, Temperature,
+                                  **keyword_parameters):
     """
     This function calculated the anisotropic gradient for thermal expansion and returns the properties along that path
     :param Coordinate_file: file containing the lattice parameters (and coordinates)
@@ -566,9 +585,13 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
 
     # Setting parameters for the Gruneisen parameter and loading in previously found wavenumbers for SiQ
     if Method == 'GaQg':
-        print "Anisotropic Gruneisen not yet made"
-        sys.exit()
+        Gruneisen, Wavenumber_Reference, Crystal_matrix_Reference = \
+            Wvn.Setup_Anisotropic_Gruneisen(Coordinate_file, Program, LocGrd_LatParam_FracStep, molecules_in_coord,
+                                            Parameter_file=keyword_parameters['Parameter_file'])
     elif Method == 'GaQ':
+        Gruneisen = 0.
+        Wavenumber_Reference = 0.
+        Crystal_matrix_Reference = 0.
         if os.path.isfile(Output + '_WVN_' + Method + '.npy'):
             wavenumbers_hold = np.load(Output + '_WVN_' + Method + '.npy')
             # If the temperatures line up in the previous wavenumber matrix, it will be used in the current run
@@ -598,7 +621,9 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
                                              molecules_in_coord, Statistical_mechanics, NumAnalysis_step,
                                              Parameter_file=keyword_parameters['Parameter_file'],
                                              LocGrd_LatParam_FracStep=LocGrd_LatParam_FracStep,
-                                             Aniso_LocGrad_Type=Aniso_LocGrad_Type)
+                                             Aniso_LocGrad_Type=Aniso_LocGrad_Type, Gruneisen=Gruneisen,
+                                             Wavenumber_Reference=Wavenumber_Reference,
+                                             Crystal_matrix_Reference=Crystal_matrix_Reference)
 
         # Saving wavenumbers and local gradient information
         if Method == 'GaQ':
@@ -626,10 +651,9 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
                                   matrix_parameters_fraction_change=LocGrd_LatParam_FracStep,
                                   LocGrd_Temp_step=LocGrd_Temp_step, Statistical_mechanics=Statistical_mechanics,
                                   Parameter_file=keyword_parameters['Parameter_file'],
-                                  Aniso_LocGrad_Type=Aniso_LocGrad_Type)
-                                  #,
-                                  #Gruneisen=Gruneisen, Wavenumber_Reference=Wavenumber_Reference,
-                                  #Volume_Reference=Volume_Reference)
+                                  Aniso_LocGrad_Type=Aniso_LocGrad_Type,
+                                  Gruneisen=Gruneisen, Wavenumber_Reference=Wavenumber_Reference,
+                                  Crystal_matrix_Reference=Crystal_matrix_Reference)
 
             properties[i + 1, :] = Pr.Properties(Output + '_' + Method + 'T' + str(temperature[i + 1]) + file_ending,
                                                  wavenumbers[i + 1, 1:], temperature[i + 1], Pressure, Program,
@@ -641,6 +665,11 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
             np.save(Output + '_dh_' + Method, lattice_gradient)
 
     # Saving the raw data before minimizing
+    properties = Cubic_Hermite_Spline(Output, Method, Program, properties, Temperature, molecules_in_coord,
+                                      Pressure, Statistical_mechanics,
+                                      Parameter_file=keyword_parameters['Parameter_file'],
+                                      Gruneisen=Gruneisen, Wavenumber_Reference=Wavenumber_Reference,
+                                      Crystal_matrix_Reference=Crystal_matrix_Reference)
     print "   All properties have been saved in " + Output + "_raw.npy"
     np.save(Output+'_raw', properties)
     return properties
