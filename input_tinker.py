@@ -85,8 +85,6 @@ NumAnalysis_step = 150.0
 
 ## Local gradient presets
 # These options are tuned best for a wide array of options
-# Temperature stepsize
-LocGrd_Temp_step = 0.01
 # Isotropic volume fraction change
 LocGrd_Vol_FracStep = 3e-02
 # Anisotropic lattice fraction change
@@ -140,7 +138,6 @@ Run_LatticeDynamics.Lattice_Dynamics(Temperature = Temperature,
                                      properties_to_save = properties_to_save,
                                      NumAnalysis_method = NumAnalysis_method, 
                                      NumAnalysis_step  = NumAnalysis_step,
-                                     LocGrd_Temp_step = LocGrd_Temp_step, 
                                      LocGrd_Vol_FracStep = LocGrd_Vol_FracStep,
                                      LocGrd_LatParam_FracStep = LocGrd_LatParam_FracStep, 
                                      StepWise_Vol_StepFrac = StepWise_Vol_StepFrac,
