@@ -11,12 +11,13 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1, Met
                      Output='out', Coordinate_file='molecule.xyz', Parameter_file='keyfile.key',
                      molecules_in_coord=1, properties_to_save=['G', 'T'], NumAnalysis_method='RK4',
                      NumAnalysis_step=25.0,
-                     LocGrd_Temp_step=0.01, LocGrd_Vol_FracStep=3e-02,
+                     LocGrd_Vol_FracStep=3e-02,
                      LocGrd_LatParam_FracStep=5e-05, StepWise_Vol_StepFrac=1.5e-3,
                      StepWise_Vol_LowerFrac=0.97, StepWise_Vol_UpperFrac=1.16,
                      Statistical_mechanics='Classical', Gruneisen_Vol_FracStep=1.5e-3,
                      Wavenum_Tol=-1, Gradient_MaxTemp=300.0, Aniso_LocGrad_Type='73', Gruneisen_order=1):
 
+    Temperature = np.array(Temperature).astype(float)
     if Method == 'HA':
         print "Performing Harmonic Approximation"
         # Running the Harmonic Approximation
@@ -60,7 +61,7 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1, Met
         # Gradient Isotropic QHA
         print "Performing Gradient Isotropic Quasi-Harmonic Approximation"
         properties = TNA.Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, Output, Method,
-                                                      Gradient_MaxTemp, Pressure, LocGrd_Vol_FracStep, LocGrd_Temp_step,
+                                                      Gradient_MaxTemp, Pressure, LocGrd_Vol_FracStep,
                                                       Statistical_mechanics, NumAnalysis_step, NumAnalysis_method,
                                                       Temperature,
                                                       Parameter_file=Parameter_file,
@@ -73,7 +74,7 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1, Met
         print "Performing Gradient Anisotropic Quasi-Harmonic Approximation"
         properties = TNA.Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, Output, Method,
                                                        Gradient_MaxTemp, Pressure, LocGrd_LatParam_FracStep,
-                                                       LocGrd_Temp_step, Statistical_mechanics, NumAnalysis_step,
+                                                       Statistical_mechanics, NumAnalysis_step,
                                                        NumAnalysis_method, Aniso_LocGrad_Type, Temperature,
                                                        Parameter_file=Parameter_file)
         print "   Saving user specified properties in indipendent files:"
@@ -107,8 +108,6 @@ if __name__ == '__main__':
                         help='choice of method for temperature gradient integration')
     parser.add_argument('-m', '--integration_step', dest='NumAnalysis_step', default=25.0, type=float,
                         help='step size for temperature gradient integration')
-    parser.add_argument('-n', '--gradient_tdelta', dest='LocGrd_Temp_step', default=0.01, type=float,
-                        help='steps size for numerical calculation of gradient in T (in K)')
     #MRS: seems like volume and box lattice fraction parameters should be combined?
     parser.add_argument('-o', '--gradient_vdelta', dest='LocGrd_Vol_FracStep', default=3e-02, type=float,
                         help='step size fnumerical calculation of gradient in volume fraction (in fraction)')
@@ -147,7 +146,6 @@ if __name__ == '__main__':
                      properties_to_save=args.properties_to_save,
                      NumAnalysis_method=args.NumAnalysis_method,
                      NumAnalysis_step=args.NumAnalysis_step,
-                     LocGrd_Temp_step=args.LocGrd_Temp_step,
                      LocGrd_Vol_FracStep=args.LocGrd_Vol_FracStep,
                      LocGrd_LatParam_FracStep=args.LocGrd_LatParam_FracStep,
                      StepWise_Vol_StepFrac=args.StepWise_Vol_StepFrac,

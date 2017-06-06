@@ -9,7 +9,7 @@ import Run_LatticeDynamics
 ### General Inputs ###
 ## Temperature
 # Import numpy array of temperatures
-Temperature = [0,25,50,75,100,125,150,175,200,225,250,275,300]
+Temperature = [10.,20.,30.,40.,50.,60.,70.,80.,90.,100.,110.,120.,130.,140.,150.,160.,170.,180.,190.,200.,210.,220.,230.,240.,250.,260.,270.,280.,290.]
 
 ## Pressure
 # Only set up for single pressure values
@@ -25,7 +25,7 @@ Pressure = 1
 # 'GiQg' - Gradient isotropic quasi-harmonic approximation with Gruneisen parameter
 # 'GaQ'  - Gradient anisotropic quasi-harmonic approximation
 # 'GaQg' - Gradient anisotropic quasi-harmonic approximation with Gruneisen parameter
-Method = 'GaQ'
+Method = 'GaQg'
 
 ## Output
 # Output name for files
@@ -55,7 +55,7 @@ Parameter_file = 'keyfile.key'
 
 ## Nuber of molecules
 #****I want to eventually replace this with a program specific code to look at connectivity
-molecules_in_coord = 4
+molecules_in_coord = 8
 
 ## Properties
 # Properties to output in individual files
@@ -81,7 +81,7 @@ NumAnalysis_method = 'RK4'
 
 ## Stepsize numerical analysis
 # Right now only temperature is the only input option
-NumAnalysis_step = 25.0
+NumAnalysis_step = 150.0
 
 ## Local gradient presets
 # These options are tuned best for a wide array of options
@@ -111,14 +111,14 @@ Gruneisen_Vol_FracStep = 1.5e-3
 Wavenum_Tol = -1.0
 
 ### Maximum temperature for gradient method
-Gradient_MaxTemp = 100.0
+Gradient_MaxTemp = 300.0
 
 ### Number of Hessians for anistropic local gradient
 # Option - Description
 # '73'   - Compute every vibrational spectra for local gradient
 # '25'   - For d**2G/dUdU compute vibrational spectra for the diagonal and the off diagonals for the upper left 3x3
 # matrix
-Aniso_LocGrad_Type = 73
+Aniso_LocGrad_Type = 19
 
 # Gruneisen Order
 # Option - Description

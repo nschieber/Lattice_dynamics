@@ -302,6 +302,22 @@ def Quantum_Vibrational_A(Temperature, wavenumbers):  # Was vib_Aq
     A = sum(A)
     return A
 
+def Vibrational_Entropy(Temperature, wavenumbers, Statistical_mechanics):
+    """
+    Function to call the vibraitonal entropy based off of a specific statistical mechanics
+
+    **Required Inputs
+    Temperature = single temperature in Kelvin to determine the vibrational entropy (does not work at 0 K)
+    wavenumbers = array of wavenumber (in order with the first three being 0 cm**-1 for the translational modes)
+    Statistical_mechanics = 'Classical'
+                            'Quantum'
+    """
+    if Statistical_mechanics == 'Classical':
+        S = Classical_Vibrational_S(Temperature, wavenumbers)
+    elif Statistical_mechanics == 'Quantum':
+        S = Quantum_Vibrational_S(Temperature, wavenumbers)
+    return S
+
 
 def Classical_Vibrational_S(Temperature, wavenumbers):  # Was Vib_Sc
     """

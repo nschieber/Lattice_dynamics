@@ -43,13 +43,6 @@ def Call_Wavenumbers(Method, **keyword_parameters):
     New_Crystal_matrix
     Lattice_FracStep
     """
-    # If the output file exists, it will be opened and returned
-
-    if 'Output' is keyword_parameters:
-        if os.path.isfile(keyword_parameters['Output']):
-            wavenumbers = np.load(keyword_parameters['Output'])
-            return wavenumbers
-
     if (Method == 'SiQg') or (Method == 'GiQg'):
         # Methods that use the Gruneisen parameter
         if ('Gruneisen' in keyword_parameters) and ('Wavenumber_Reference' in keyword_parameters) and \
@@ -60,16 +53,30 @@ def Call_Wavenumbers(Method, **keyword_parameters):
                                                         keyword_parameters['Volume_Reference'],
                                                         keyword_parameters['New_Volume'])
             return wavenumbers
-
         else:
+            # If there is a saved Gruneisen parameter and set of wavenumbers
+            if os.path.isfile(keyword_parameters['Output'] + '_GRUwvn_' + Method + '.npy') and os.path.isfile(
+                                            keyword_parameters['Output'] + '_GRU_' + Method + '.npy'):
+                print "   ...Using Gruneisen parameters from: " + keyword_parameters['Output'] + '_GRU_' \
+                      + Method + '.npy'
+                Gruneisen = np.load(keyword_parameters['Output'] + '_GRU_' + Method + '.npy')
+                Wavenumber_Reference = np.load(keyword_parameters['Output'] + '_GRUwvn_' + Method + '.npy')
+                Volume_Reference = Pr.Volume(Coordinate_file=keyword_parameters['Coordinate_file'],
+                                             Program=keyword_parameters['Program'],
+                                             Parameter_file=keyword_parameters['Parameter_file'])
             # If the Gruneisen parameter has yet to be determined, here it will be calculated
             # It is assumed that the input Coordinate_file is the lattice minimum strucutre
-            Gruneisen, Wavenumber_Reference, Volume_Reference = \
-                        Setup_Isotropic_Gruneisen(keyword_parameters['Coordinate_file'],
-                                                  keyword_parameters['Program'],
-                                                  keyword_parameters['Gruneisen_Vol_FracStep'],
-                                                  keyword_parameters['molecules_in_coord'], Parameter_file=
-                                                  keyword_parameters['Parameter_file'])
+            else:
+                Gruneisen, Wavenumber_Reference, Volume_Reference = \
+                    Setup_Isotropic_Gruneisen(keyword_parameters['Coordinate_file'],
+                                              keyword_parameters['Program'],
+                                              keyword_parameters['Gruneisen_Vol_FracStep'],
+                                              keyword_parameters['molecules_in_coord'], Parameter_file=
+                                              keyword_parameters['Parameter_file'])
+                print "   ... Saving reference wavenumbers and Gruneisen parameters to: " + \
+                      keyword_parameters['Output'] + '_GRU_' + Method + '.npy'
+                np.save(keyword_parameters['Output'] + '_GRU_' + Method, Gruneisen)
+                np.save(keyword_parameters['Output'] + '_GRUwvn_' + Method, Wavenumber_Reference)
             return Gruneisen, Wavenumber_Reference, Volume_Reference
 
     elif Method == 'GaQg':
@@ -83,14 +90,30 @@ def Call_Wavenumbers(Method, **keyword_parameters):
             return wavenumbers
 
         else:
+            if os.path.isfile(keyword_parameters['Output'] + '_GRUwvn_' + Method + '.npy') and os.path.isfile(
+                                            keyword_parameters['Output'] + '_GRU_' + Method + '.npy'):
+                print "   ...Using Gruneisen parameters from: " + keyword_parameters['Output'] + '_GRU_' \
+                      + Method + '.npy'
+                Gruneisen = np.load(keyword_parameters['Output'] + '_GRU_' + Method + '.npy')
+                Wavenumber_Reference = np.load(keyword_parameters['Output'] + '_GRUwvn_' + Method + '.npy')
+                if keyword_parameters['Program'] == 'Tinker':
+                    Crystal_matrix_Reference = Ex.Lattice_parameters_to_Crystal_matrix(
+                        Pr.Tinker_Lattice_Parameters(keyword_parameters['Coordinate_file']))
+                elif keyword_parameters['Program'] == 'Test':
+                    Crystal_matrix_Reference = Ex.Lattice_parameters_to_Crystal_matrix(
+                        Pr.Test_Lattice_Parameters(keyword_parameters['Coordinate_file']))
             # If the Gruneisen parameter has yet to be determined, here it will be calculated
             # It is assumed that the input Coordinate_file is the lattice minimum strucutre
-            Gruneisen, Wavenumber_Reference, Crystal_matrix_Reference = \
-                        Setup_Anisotropic_Gruneisen(keyword_parameters['Coordinate_file'],
-                                                    keyword_parameters['Program'],
-                                                    keyword_parameters['Lattice_FracStep'],
-                                                    keyword_parameters['molecules_in_coord'], Parameter_file=
-                                                    keyword_parameters['Parameter_file'])
+            else:
+                Gruneisen, Wavenumber_Reference, Crystal_matrix_Reference = \
+                    Setup_Anisotropic_Gruneisen(keyword_parameters['Coordinate_file'], keyword_parameters['Program'],
+                                                keyword_parameters['Lattice_FracStep'],
+                                                keyword_parameters['molecules_in_coord'],
+                                                Parameter_file=keyword_parameters['Parameter_file'])
+                print "   ... Saving reference wavenumbers and Gruneisen parameters to: " + \
+                      keyword_parameters['Output'] + '_GRU_/_GRUwvn' + Method + '.npy'
+                np.save(keyword_parameters['Output'] + '_GRU_' + Method, Gruneisen)
+                np.save(keyword_parameters['Output'] + '_GRUwvn_' + Method, Wavenumber_Reference)
             return Gruneisen, Wavenumber_Reference, Crystal_matrix_Reference
 
     elif (Method == 'SiQ') or (Method == 'GiQ') or (Method == 'GaQ') or (Method == 'HA'):
