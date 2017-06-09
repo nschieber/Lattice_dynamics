@@ -8,7 +8,7 @@ import ThermodynamicProperties as Pr
 import Wavenumbers as Wvn
 import Thermal_NumericalAnalysis as TNA
 
-def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1, Method='HA', Program='Test',
+def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1., Method='HA', Program='Test',
                      Output='out', Coordinate_file='molecule.xyz', Parameter_file='keyfile.key',
                      molecules_in_coord=1, properties_to_save=['G', 'T'], NumAnalysis_method='RK4',
                      NumAnalysis_step=25.0,
@@ -16,7 +16,7 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1, Met
                      LocGrd_LatParam_FracStep=5e-05, StepWise_Vol_StepFrac=1.5e-3,
                      StepWise_Vol_LowerFrac=0.97, StepWise_Vol_UpperFrac=1.16,
                      Statistical_mechanics='Classical', Gruneisen_Vol_FracStep=1.5e-3,
-                     Wavenum_Tol=-1, Gradient_MaxTemp=300.0, Aniso_LocGrad_Type='73', Gruneisen_order=1):
+                     Wavenum_Tol=-1., Gradient_MaxTemp=300.0, Aniso_LocGrad_Type='73'):
 
     Temperature = np.array(Temperature).astype(float)
     if Method == 'HA':
@@ -86,12 +86,9 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1, Met
 
 
 if __name__ == '__main__':
-    
-    import argparse 
-    
+    import argparse
     parser = argparse.ArgumentParser(description='Calculate free energies as a function of T using lattice dynamics')
-    
-    parser.add_argument('-i', '--input_file', dest='Input_file', default='input_test.py', #type=file,
+    parser.add_argument('-i', '--input_file', dest='Input_file', default='input_test.py',
                         help='Input file containing all parameters for the run')
 
     args = parser.parse_args()
@@ -99,7 +96,7 @@ if __name__ == '__main__':
     try:
         Method = subprocess.check_output("less " + str(args.Input_file) + " | grep Method | grep = ", shell=True)
         Method = Method.split('=')[1].strip()
-        if any(Method == np.array(['HA', 'SiQ', 'SiQg', 'GiQ', 'GiQg', 'GaQ', 'GaQg'])) == False:
+        if Method not in ['HA', 'SiQ', 'SiQg', 'GiQ', 'GiQg', 'GaQ', 'GaQg']:
             print "Input method is not supported. Please select from the following:"
             print "   HA, SiQ, SiQg, GiQ, GiQg, GaQ, GaQg"
             print "Exiting code"
@@ -112,7 +109,7 @@ if __name__ == '__main__':
     try:
         Program = subprocess.check_output("less " + str(args.Input_file) + " | grep Program | grep = ", shell=True)
         Program = Program.split('=')[1].strip()
-        if any(Program == np.array(['Tinker', 'Test'])) == False:
+        if Program not in ['Tinker', 'Test']:
             print "Input program is not supported. Please select from the following:"
             print "   Tinker, Test"
             print "Exiting code"
@@ -126,7 +123,7 @@ if __name__ == '__main__':
         Statistical_mechanics = subprocess.check_output("less " + str(args.Input_file) + " | grep Statistical_mechanics"
                                                                                          " | grep = ", shell=True)
         Statistical_mechanics = Statistical_mechanics.split('=')[1].strip()
-        if any(Statistical_mechanics == np.array(['Classical', 'Quantum'])) == False:
+        if Statistical_mechanics not in ['Classical', 'Quantum']:
             print "Input statistical mechanics is not supported. Please select from the following:"
             print "   Classical, Quantum"
             print "Exiting code"
@@ -142,9 +139,9 @@ if __name__ == '__main__':
         Temperature = np.array(Temperature.split('=')[1].strip().split(',')).astype(float)
     except subprocess.CalledProcessError as grepexc:
         Temperature = [0.0, 25.0, 50.0, 75.0, 100.0]
-        if any(Method == np.array(['HA', 'SiQ', 'SiQg'])):
+        if Method in ['HA', 'SiQ', 'SiQg']:
             print "No temperatures were selected, using default temperatures of:"
-            print Temperature
+            print "   " + str(Temperature)
 
     try:
         Pressure = subprocess.check_output("less " + str(args.Input_file) + " | grep Pressure | grep = ", shell=True)
@@ -169,7 +166,8 @@ if __name__ == '__main__':
         sys.exit()
 
     try:
-        Parameter_file = subprocess.check_output("less " + str(args.Input_file) + " | grep Parameter_file  | grep = ", shell=True)
+        Parameter_file = subprocess.check_output("less " + str(args.Input_file) + " | grep Parameter_file"
+                                                                                  " | grep = ", shell=True)
         Parameter_file = Parameter_file.split('=')[1].strip()
     except subprocess.CalledProcessError as grepexc:
         Parameter_file = ''
@@ -192,17 +190,16 @@ if __name__ == '__main__':
 
     try:
         properties_to_save_temp = subprocess.check_output("less " + str(args.Input_file) + " | grep properties_to_save"
-                                                                                      " | grep = ", shell=True)
-        properties_to_save_temp = np.array(properties_to_save_temp.split('=')[1].strip().split(','))
+                                                                                           " | grep = ", shell=True)
+        properties_to_save_temp = properties_to_save_temp.split('=')[1].strip().split(',')
         properties_to_save = []
         for i in range(len(properties_to_save_temp)):
-            if any(properties_to_save_temp[i] == np.array(['G', 'S', 'T', 'P', 'Av', 'V', 'h', 'U'])):
+            if properties_to_save_temp[i] in ['G', 'S', 'T', 'P', 'Av', 'V', 'h', 'U']:
                 properties_to_save.append(properties_to_save_temp[i])
             else:
                 print "The following input is not a choice in properites: " + properties_to_save_temp[i]
-        properties_to_save = np.array(properties_to_save)
     except subprocess.CalledProcessError as grepexc:
-        properties_to_save = np.array(['G', 'T'])
+        properties_to_save = ['G', 'T']
 
     try:
         NumAnalysis_method = subprocess.check_output("less " + str(args.Input_file) + " | grep NumAnalysis_method"
@@ -210,7 +207,7 @@ if __name__ == '__main__':
         NumAnalysis_method = NumAnalysis_method.split('=')[1].strip()
     except subprocess.CalledProcessError as grepexc:
         NumAnalysis_method = 'Euler'
-        if any(Method == np.array(['GiQ', 'GiQg', 'GaQ', 'GaQg'])):
+        if Method in ['GiQ', 'GiQg', 'GaQ', 'GaQg']:
             print "Numerical analysis method  was not specified"
             print "... Using default method: Euler"
 
@@ -220,7 +217,7 @@ if __name__ == '__main__':
         NumAnalysis_step = NumAnalysis_step.split('=')[1].strip()
     except subprocess.CalledProcessError as grepexc:
         NumAnalysis_step = 150.
-        if any(Method == np.array(['GiQ', 'GiQg', 'GaQ', 'GaQg'])):
+        if Method in ['GiQ', 'GiQg', 'GaQ', 'GaQg']:
             print "Numerical analysis step size  was not specified"
             print "... Using default step size: " + str(NumAnalysis_step)
 

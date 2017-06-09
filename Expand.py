@@ -109,7 +109,7 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
 ##########################################
 #       TINKER MOLECULAR MODELING        #
 ##########################################
-def Return_Tinker_Coordinates(Coordinate_file): # Was Tink_Cords
+def Return_Tinker_Coordinates(Coordinate_file):
     """
     This function opens a Tinker .xyz for a crystal and returns the 3x(number of atoms) matrix
 
@@ -124,7 +124,6 @@ def Return_Tinker_Coordinates(Coordinate_file): # Was Tink_Cords
 
 
 def Output_Tinker_New_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output):
-    # Was Tink_NewCords
     """
     This function takes a new set of coordinates and utilizes a previous coordinate file as a template to produce a new
     Tinker .xyz crystal file
@@ -199,7 +198,7 @@ def Lattice_parameters_to_Crystal_matrix(lattice_parameters):
     return crystal_matrix
 
 
-def Crystal_matrix_to_Lattice_parameters(crystal_matrix): # was params
+def Crystal_matrix_to_Lattice_parameters(crystal_matrix):
     """
     This function takes a crystal lattice matrix and return the lattice parameters
 
@@ -214,13 +213,8 @@ def Crystal_matrix_to_Lattice_parameters(crystal_matrix): # was params
     c = np.sqrt(crystal_matrix[0, 2]**2 + crystal_matrix[1, 2]**2 + crystal_matrix[2, 2]**2)
     gamma = np.degrees(np.arccos(crystal_matrix[0, 1]/b))
     beta = np.degrees(np.arccos(crystal_matrix[0, 2]/c))
-    alpha = np.degrees(np.arccos(crystal_matrix[1, 2]*np.sin(np.radians(gamma))/c + np.cos(np.radians(beta))*np.cos(np.radians(gamma))))
-#    a = crystal_matrix[0, 0]
-#    c = np.absolute(np.sqrt(crystal_matrix[2, 2]**2 - crystal_matrix[0, 2]**2 - crystal_matrix[1, 2]**2))
-#    beta = np.degrees(np.arccos(crystal_matrix[0, 2]/float(c)))
-#    alpha = np.degrees(np.arccos(crystal_matrix[1, 2]/(c*np.sin(np.radians(beta)))))
-#    gamma = np.degrees(np.arctan(crystal_matrix[1, 1]/crystal_matrix[0, 1]))
-#    b = np.absolute(crystal_matrix[0, 1]/np.cos(np.radians(gamma)))
+    alpha = np.degrees(np.arccos(crystal_matrix[1, 2]*np.sin(np.radians(gamma))/c +
+                                 np.cos(np.radians(beta))*np.cos(np.radians(gamma))))
 
     # Assuring that the parameters returned are all positive
     if alpha < 0.0:
@@ -296,9 +290,9 @@ def Change_Crystal_Matrix(matrix_parameters_fraction_change, Program, Coordinate
 #            General Expansion           #
 ##########################################
 def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coord, Output, **keyword_parameters):
-    # was Expand
     """
-    This function expands a coordinate file either based off of an inputted change in lattice vectors or crystal lattice matrix
+    This function expands a coordinate file either based off of an inputted change in lattice vectors or crystal 
+        lattice matrix
 
     **Required Inputs
     Coordinate_file = file containing lattice parameters (and coordinates)
@@ -347,7 +341,6 @@ def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coor
             crystal_matrix = Lattice_parameters_to_Crystal_matrix(lattice_parameters)
         elif Expansion_type == 'crystal_matrix':
             crystal_matrix = crystal_matrix + keyword_parameters['dcrystal_matrix']
-            lattice_parameters = Crystal_matrix_to_Lattice_parameters(crystal_matrix)
             lattice_parameters = Crystal_matrix_to_Lattice_parameters(crystal_matrix)
         Coordinate_center_of_mass = np.dot(crystal_matrix, Coordinate_center_of_mass.T).T
         for i in range(int(molecules_in_coord)):
@@ -450,9 +443,16 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
                                           Parameter_file=keyword_parameters['Parameter_file']) +
                    Pr.Gibbs_Free_Energy(Temperature, Pressure, Program, wavenumbers_minus, coordinate_minus,
                                         Statistical_mechanics, molecules_in_coord,
-                                        Parameter_file=keyword_parameters['Parameter_file']))/((volume*LocGrd_Vol_FracStep)**2)
+                                        Parameter_file=keyword_parameters['Parameter_file'])) / \
+                  ((volume*LocGrd_Vol_FracStep)**2)
 
     # Removing excess files
+    if Temperature == 0.1:
+        print "Saving extra gradient parameters"
+        test = np.load('extra_gradient.npy')
+        test = np.concatenate((test, np.array([[numerator, denominator]])), axis=0)
+        np.save('extra_gradient', test)
+
     os.system('rm '+coordinate_plus+' '+coordinate_minus)
     return -numerator/denominator, wavenumbers, volume
 

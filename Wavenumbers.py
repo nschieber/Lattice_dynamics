@@ -128,7 +128,7 @@ def Call_Wavenumbers(Method, **keyword_parameters):
 ##########################################
 #       TINKER MOLECULAR MODELING        #
 ##########################################
-def Tinker_Wavenumber(Coordinate_file, Parameter_file): #Was Tink_WVN
+def Tinker_Wavenumber(Coordinate_file, Parameter_file):
     """
     Calls the vibrate executable of Tinker Molecular Modeling and extracts the wavenumbers
 
@@ -157,7 +157,7 @@ def Tinker_Wavenumber(Coordinate_file, Parameter_file): #Was Tink_WVN
 ##########################################
 #                  Test                  #
 ##########################################
-def Test_Wavenumber(Coordinate_file, function = 'Test2'):
+def Test_Wavenumber(Coordinate_file, function='Test2'):
     """
     This function takes a set of lattice parameters in a .npy file and returns a set of wavenumbers
     Random functions can be input here to run different tests and implimented new methods efficiently
@@ -167,19 +167,22 @@ def Test_Wavenumber(Coordinate_file, function = 'Test2'):
     """
 
     if function == 'Test1':
-        wavenumbers = np.array([0.,0.,0.,52.,380.,1570.,3002.])
-        lattice_parameters= np.load(Coordinate_file)
-        for i in np.arange(3,len(wavenumbers[3:])+3):  # probably should be 3?
-            wavenumbers[i] = wavenumbers[i]*(1/3.)*(((lattice_parameters[0]-16)/6)**2+((lattice_parameters[1]-12)/5)**2+((lattice_parameters[2]-23)/11)**2)
+        wavenumbers = np.array([0., 0., 0., 52., 380., 1570., 3002.])
+        lattice_parameters = np.load(Coordinate_file)
+        for i in np.arange(3, len(wavenumbers[3:])+3):  # probably should be 3?
+            wavenumbers[i] = wavenumbers[i]*(1/3.)*(((lattice_parameters[0]-16)/6)**2 + ((lattice_parameters[1] -
+                                                                                          12)/5)**2 +
+                                                    ((lattice_parameters[2] - 23)/11)**2)
     elif function == 'Test2':
-        wavenumbers = np.arange(1,200)
+        wavenumbers = np.arange(1, 200)
         wavenumbers = wavenumbers**(5.0/3.0)  # get something in the right range = 400^(4/3) = 2941
-        wavenumbers[0:3] = [0,0,0]  # zero translation
-        lattice_parameters= np.load(Coordinate_file)
-        [refx,refy,refz] = [lattice_parameters[0]/10,lattice_parameters[1]/7,lattice_parameters[2]/12]
+        wavenumbers[0:3] = [0, 0, 0]  # zero translation
+        lattice_parameters = np.load(Coordinate_file)
+        [refx, refy, refz] = [lattice_parameters[0]/10, lattice_parameters[1]/7, lattice_parameters[2]/12]
 #        [refx,refy,refz] = [lattice_parameters[0]/5,lattice_parameters[1]/6,lattice_parameters[2]/8]
         for i in range(3,len(wavenumbers[3:])+3):
-            wavenumbers[i] = wavenumbers[i]*(1.0/15.0)*(2*refx**(4.8) + 10*refy**(4.2) + 4*np.sin(2*np.pi*refx) + 3*refz**(4.8))
+            wavenumbers[i] = wavenumbers[i]*(1.0/15.0)*(2*refx**4.8 + 10*refy**4.2 + 4*np.sin(2*np.pi*refx) +
+                                                        3*refz**4.8)
     return wavenumbers
 
 
@@ -211,7 +214,8 @@ def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, 
     # Also, assigning a file ending name for the nex coordinate file (program dependent)
     if Program == 'Tinker':
         Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp',
-                            dlattice_parameters=dLattice_Parameters, Parameter_file=keyword_parameters['Parameter_file'])
+                            dlattice_parameters=dLattice_Parameters,
+                            Parameter_file=keyword_parameters['Parameter_file'])
         Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'])
         Wavenumber_expand = Tinker_Wavenumber('temp.xyz', keyword_parameters['Parameter_file'])
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
@@ -231,7 +235,7 @@ def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, 
     # Calculating the Gruneisen parameter and zeroing out the parameters for the translational modes
     Gruneisen = np.zeros(len(Wavenumber_Reference))
     Gruneisen[3:] = -(np.log(Wavenumber_Reference[3:]) - np.log(Wavenumber_expand[3:]))/(np.log(Volume_Reference) -
-                                                                                 np.log(Volume_expand))
+                                                                                         np.log(Volume_expand))
 
     # Removing extra files created in process
     os.system('rm temp'+file_ending)

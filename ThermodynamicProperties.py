@@ -86,7 +86,7 @@ def Properties_with_Temperature(Coordinate_file, wavenumbers, Temperature, Press
     return properties
 
 
-def Save_Properties(properties, Properties_to_save, Output, Method, Statistical_mechanics):  # Was PROP_Out
+def Save_Properties(properties, Properties_to_save, Output, Method, Statistical_mechanics):
     """
     Function for saving user specified properties
 
@@ -114,7 +114,7 @@ def Save_Properties(properties, Properties_to_save, Output, Method, Statistical_
     """
     for i in Properties_to_save:
         if i == 'T':  # Temperature
-            print "   ... Saving temperature in: " + Output + "_T_" + Method +".npy"
+            print "   ... Saving temperature in: " + Output + "_T_" + Method + ".npy"
             np.save(Output + '_T_' + Method, properties[:, 0])
         if i == 'P':  # Pressure
             print "   ... Saving Pressure in: " + Output + "_P_" + Method + ".npy"
@@ -145,7 +145,7 @@ def Save_Properties(properties, Properties_to_save, Output, Method, Statistical_
 ##########################################
 #       TINKER MOLECULAR MODELING        #
 ##########################################
-def Tinker_U(Coordinate_file, Parameter_file):  # Was Tink_U
+def Tinker_U(Coordinate_file, Parameter_file):
     """
     Calls the Tinker analyze executable and extracts the total potential energy
     ******Eventually! I want to also be able to extract individual potential energy terms
@@ -160,7 +160,7 @@ def Tinker_U(Coordinate_file, Parameter_file):  # Was Tink_U
     return U
 
 
-def Tinker_atoms_per_molecule(Coordinate_file, molecules_in_coord):  # Was Tink_ATM_MOL
+def Tinker_atoms_per_molecule(Coordinate_file, molecules_in_coord):
     """
     This function determines the number of atoms per molecule
 
@@ -175,7 +175,7 @@ def Tinker_atoms_per_molecule(Coordinate_file, molecules_in_coord):  # Was Tink_
     return atoms_per_molecule
 
 
-def Tinker_Lattice_Parameters(Coordinate_file):  # Was Tink_LATVEC
+def Tinker_Lattice_Parameters(Coordinate_file):
     """
     This function extracts the lattice parameters from within the Tinker coordinate file 
 
@@ -207,7 +207,7 @@ def Test_U(Coordinate_file):
     return U
 
 
-def Test_Lattice_Parameters(Coordinate_file):  # Was Test_LATVEC
+def Test_Lattice_Parameters(Coordinate_file):
     """
     This function takes a set of lattice parameters in a .npy file and returns them
 
@@ -221,7 +221,7 @@ def Test_Lattice_Parameters(Coordinate_file):  # Was Test_LATVEC
 ##########################################
 #           THERMO-PROPERTIES            #
 ##########################################
-def Volume(**keyword_parameters):  # Was V
+def Volume(**keyword_parameters):
     """
     This function either takes a coordinate file and determines the structures volume or takes the lattice parameters to
      calculate the volume
@@ -253,7 +253,7 @@ def Volume(**keyword_parameters):  # Was V
     return V
 
 
-def Classical_Vibrational_A(Temperature, wavenumbers):  # Was vib_Ac
+def Classical_Vibrational_A(Temperature, wavenumbers):
     """
     Function to calculate the Classical Helmholtz vibrational energy at a given temperature
     
@@ -278,7 +278,7 @@ def Classical_Vibrational_A(Temperature, wavenumbers):  # Was vib_Ac
     return A
 
 
-def Quantum_Vibrational_A(Temperature, wavenumbers):  # Was vib_Aq
+def Quantum_Vibrational_A(Temperature, wavenumbers):
     """
     Function to calculate the Quantum Helmholtz vibrational energy at a given temperature
 
@@ -319,7 +319,7 @@ def Vibrational_Entropy(Temperature, wavenumbers, Statistical_mechanics):
     return S
 
 
-def Classical_Vibrational_S(Temperature, wavenumbers):  # Was Vib_Sc
+def Classical_Vibrational_S(Temperature, wavenumbers):
     """
     Funciton to calculate the classical vibrational entropy at a given temperature
 
@@ -371,7 +371,7 @@ def Quantum_Vibrational_S(Temperature, wavenumbers):
 
 
 def Gibbs_Free_Energy(Temperature, Pressure, Program, wavenumbers, Coordinate_file, Statistical_mechanics,
-                      molecules_in_coord, **keyword_parameters):  # Was G
+                      molecules_in_coord, **keyword_parameters):
     """
     Function to calculate the Gibbs free energy from the potential energy and vibrational Helmholtz free energy
 
