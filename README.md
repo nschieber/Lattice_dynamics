@@ -16,7 +16,7 @@ input file to another directory containing the coordinate file (and parameter fi
 2) Make necessary changes to the input file. Most of the settings have already been tuned for the best results, for a
 large subset of molecules and shouldn't need to be changed.
 3) To run the lattice dynamic calculation, in the command line of the working directory type:
-python input.py
+Run_LatticeDynamics.py -i input.inp
 
 Scripts:
 -  	ThermodynamicProperties.py: Contains functions to calculate individual properties for lattice dynamics. 
