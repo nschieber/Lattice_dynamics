@@ -129,121 +129,11 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
     os.system('rm RK4'+file_ending)
     return numerical_gradient, wavenumbers, volume, k1
 
-def Cubic_Hermite_Spline(Output, Method, Program, properties, Temperature, molecules_in_coord, Pressure,
-                        Statistical_mechanics, **keyword_parameters):
-    """
-    This funciton determines intermediate
-    :param Output: string for outputted files
-    :param Method: Gradient Isotropic QHA ('GiQ');
-                   Gradient Isotropic QHA w/ Gruneisen Parameter ('GiQg');
-                   Gradient Anisotropic QHA ('GaQ');
-                   Gradient Anisotropic QHA w/ Gruneisen Parameter ('GaQg');
-    :param Program: 'Tinker' for Tinker Molecular Modeling
-                    'Test' for a test run
-    :param properties: Properties previously calculated with gradient approach
-    :param Temperature: temperatures that were not computed with gradient approach in K
-    :param molecules_in_coord: number of molecules in the coordinate file
-    :param Pressure: pressure in atm
-    :param Statistical_mechanics: 'Classical' Classical mechanics
-                                  'Quantum' Quantum mechanics
-    :param keyword_parameters: Parameter_file
-    :return: 
-    
-    Optional Parameters
-    Parameter_file: program specific file containing force field parameters
-    Gruneisen
-    Wavenumber_Reference
-    Volume_Reference
-    Crystal_matrix_Reference
-    """
-    print "Using cubic spline to determine intermediate temperature steps."
-    # Setting file endings
-    if Program == 'Tinker':
-        file_ending = '.xyz'
-    elif Program == 'Test':
-        file_ending = '.npy'
-        keyword_parameters['Parameter_file'] = ''
-
-    # Setting step points and tangents/gradients at those points
-    if (Method == 'GiQ') or (Method == 'GiQg'):
-        point = properties[:, 6]
-        tangent = np.load(Output + '_dV_' + Method + '.npy')[:, 2]
-    elif (Method == 'GaQ') or (Method == 'GaQg'):
-        point = np.zeros((len(properties[:, 0]), 3, 3))
-        for i in range(len(point[:, 0, 0])):
-            point[i, :, :] = Ex.Lattice_parameters_to_Crystal_matrix(properties[i, 7:13])
-        tangent = np.load(Output + '_dh_' + Method + '.npy')[:, :, 4:]
-
-    step_temperatures = properties[:, 0]
-
-    for i in range(len(Temperature)):
-        if any(Temperature[i] == properties[:, 0]) != True:
-            print "   Adding in temperature point: " + str(Temperature[i]) + " K"
-            for j in range(len(step_temperatures)):
-                if step_temperatures[j] < Temperature[i]:
-                    lower_bound = j
-                if step_temperatures[j] > Temperature[i]:
-                    upper_bound = j
-                    break
-            t = (Temperature[i] - step_temperatures[lower_bound])/(step_temperatures[upper_bound] - step_temperatures[lower_bound])
-            new_point = (1 - t)*point[lower_bound] + t*point[upper_bound] + \
-                         t*(t - 1)*((1 - 2*t)*(point[upper_bound] - point[lower_bound]) +
-                                    (t - 1)*(step_temperatures[upper_bound] -
-                                             step_temperatures[lower_bound])*tangent[lower_bound] +
-                                    t*(step_temperatures[upper_bound] -
-                                       step_temperatures[lower_bound])*tangent[upper_bound])
-#            new_point = (2*t**3 - 3*t**2 + 1)*point[lower_bound] + (t**3 - 2*t**2 + t)*tangent[lower_bound] +\
-#                        (-2*t**3 + 3*t**2)*point[upper_bound] + (t**3 - t**2)*tangent[upper_bound]
-            print tangent[lower_bound], tangent[upper_bound]
-
-            if (Method == 'GiQ') or (Method == 'GiQg'):
-                volume_fraction_change = new_point/point[lower_bound]
-                dcrystal_matrix = 0.
-                keyword_parameters['Crystal_matrix_Reference'] = 0.
-                if Method == 'GiQ':
-                    keyword_parameters['Gruneisen'] = 0.
-                    keyword_parameters['Volume_Reference'] = 0.
-                    keyword_parameters['Wavenumber_Reference'] = 0.
-            elif (Method == 'GaQ') or (Method == 'GaQg'):
-                volume_fraction_change = 0.
-                dcrystal_matrix = new_point - point[lower_bound, :, :]
-                keyword_parameters['Volume_Reference'] = 0.
-                if Method == 'GaQ':
-                    keyword_parameters['Gruneisen'] = 0.
-                    keyword_parameters['Wavenumber_Reference'] = 0.
-                    keyword_parameters['Crystal_matrix_Reference'] = 0.
-            Ex.Call_Expansion(Method, 'expand', Program, 'Cords/' + Output + '_' + Method + 'T' +
-                              str(step_temperatures[lower_bound]) + file_ending, molecules_in_coord,
-                              Parameter_file=keyword_parameters['Parameter_file'],
-                              volume_fraction_change=volume_fraction_change, dcrystal_matrix=dcrystal_matrix,
-                              Output=Output + '_' + Method + 'T' + str(Temperature[i]))
-
-            wavenumbers = Wvn.Call_Wavenumbers(Method, Program=Program,
-                                               Coordinate_file=Output + '_' + Method + 'T' + str(Temperature[i])
-                                                               + file_ending,
-                                               Parameter_file=keyword_parameters['Parameter_file'],
-                                               Gruneisen=keyword_parameters['Gruneisen'],
-                                               Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
-                                               Volume_Reference=keyword_parameters['Volume_Reference'],
-                                               Crystal_matrix_Reference=keyword_parameters['Crystal_matrix_Reference'],
-                                               New_Crystal_matrix=new_point, New_Volume=new_point)
-            for j in range(len(properties[:, 0])):
-                if properties[j, 0] > Temperature[i]:
-                    properties_insert = j
-                    break
-            properties = np.insert(properties, properties_insert, Pr.Properties(Output + '_' + Method + 'T' +
-                                                                                str(Temperature[i]) + file_ending,
-                                                                                wavenumbers, Temperature[i], Pressure,
-                                                                                Program, Statistical_mechanics,
-                                                                                molecules_in_coord, Parameter_file=
-                                                                                keyword_parameters['Parameter_file']),
-                                   axis=0)
-            os.system('mv ' + Output + '_' + Method + 'T' + str(Temperature[i]) + file_ending + ' Cords/')
-    return properties
 
 def RK_Dense_Output(theta, y_0, y_1, f_0, f_1, h):
     return (1 - theta) * y_0 + theta * y_1 + theta * (theta - 1) * ((1 - 2 * theta) * (y_1 - y_0) +
                                                                     (theta - 1) * h * f_0 + theta * h * f_1)
+
 
 def Spline_Intermediate_Points(Output, Method, Program, properties, Temperature, molecules_in_coord, Pressure,
                                Statistical_mechanics, **keyword_parameters):
@@ -313,15 +203,6 @@ def Spline_Intermediate_Points(Output, Method, Program, properties, Temperature,
                                         tangent[lower_bound, matrix_order[j, 0], matrix_order[j, 1] + 4],
                                         tangent[upper_bound, matrix_order[j, 0], matrix_order[j, 1] + 4], h)
 
- #   if (Method == 'GiQ') or (Method == 'GiQg'):
- #       spline_points = spline(properties[:, 0].astype(float), properties[:, 6].astype(float),
- #                              np.array(Temperature).astype(float), order=2)
- #   elif (Method == 'GaQ') or (Method == 'GaQg'):
- #       spline_points = np.zeros((len(Temperature), 6))
- #       for i in range(6):
- #           spline_points[:, i] = spline(properties[:, 0].astype(float), properties[:, i + 7].astype(float),
- #                                        np.array(Temperature).astype(float), order=2)
-
     for i in range(len(Temperature)):
         if any(Temperature[i] == properties[:, 0]) != True:
             print "   Adding in temperature point: " + str(Temperature[i]) + " K"
@@ -344,10 +225,7 @@ def Spline_Intermediate_Points(Output, Method, Program, properties, Temperature,
                 volume_fraction_change = 0.
                 dcrystal_matrix = spline_points[i] - \
                                   Ex.Lattice_parameters_to_Crystal_matrix(properties[lower_bound, 7:13])
-                #Ex.Lattice_parameters_to_Crystal_matrix(spline_points[i, :]) \
-                                   #- Ex.Lattice_parameters_to_Crystal_matrix(properties[lower_bound, 7:13])
                 keyword_parameters['Volume_Reference'] = 0.
-                #Ex.Lattice_parameters_to_Crystal_matrix(spline_points[i])
                 if Method == 'GaQ':
                     keyword_parameters['Gruneisen'] = 0.
                     keyword_parameters['Wavenumber_Reference'] = 0.
@@ -378,6 +256,7 @@ def Spline_Intermediate_Points(Output, Method, Program, properties, Temperature,
                                    axis=0)
             os.system('mv ' + Output + '_' + Method + 'T' + str(Temperature[i]) + file_ending + ' Cords/')
     return properties
+
 
 ##########################################
 #      Stepwise Isotropic Expansion      #
@@ -418,11 +297,6 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
         keyword_parameters['Parameter_file'] = ''
 
     # Setting up array of volume fractions from the lattice structure
-
-    #volume_fraction = np.arange(StepWise_Vol_LowerFrac, StepWise_Vol_UpperFrac, StepWise_Vol_StepFrac)
-    #volume_fraction = np.append(volume_fraction[:(1.0 - StepWise_Vol_UpperFrac)/StepWise_Vol_StepFrac:][::-1],
-    #                            volume_fraction[(1.0 - StepWise_Vol_LowerFrac)/StepWise_Vol_StepFrac:])
-
     lower_volume_fraction = np.arange(StepWise_Vol_LowerFrac, 1.0, StepWise_Vol_StepFrac)[::-1]
     if len(lower_volume_fraction) > 0:
         if lower_volume_fraction[0] != 1.0:
@@ -510,17 +384,7 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
             print "      ... Properties will be bypassed for this paricular strucutre."
             properties[i, :, :] = np.nan
 
-        # Moving old strucutres around and adjusting parameters to find the next strucutre
-        if volume_fraction[i] == min(volume_fraction):
-            os.system('mv ' + Output + '_' + Method + str(volume_fraction[i]) + file_ending + ' Cords/')
-            previous_volume = 1.0
-            os.system('cp Cords/' + Output + '_' + Method + str(previous_volume) + file_ending + ' ./')
-        elif volume_fraction[i] == max(volume_fraction):
-            previous_volume = volume_fraction[i]
-            os.system('mv ' + Output + '_' + Method + str(previous_volume) + file_ending + ' Cords/')
-        elif volume_fraction[i] != 1.0:
-            os.system('mv ' + Output + '_' + Method + str(previous_volume) + file_ending + ' Cords/')
-            previous_volume = volume_fraction[i]
+    os.system('mv ' + Output + '_' + Method + '*' + file_ending + ' Cords/')
 
     # Saving the raw data before minimizing
     print "   All properties have been saved in " + Output + "_raw.npy"
