@@ -106,8 +106,8 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
                                                              keyword_parameters['Aniso_LocGrad_Type'])
             volume_hold = 0.
         if i == 0:
-            wavenumbers = wavenumbers_hold
-            volume = volume_hold
+            wavenumbers = 1.*wavenumbers_hold
+            volume = 1.*volume_hold
             k1 = 1.*RK_grad[0]
         if i != 3:
             if (Method == 'GiQ') or (Method == 'GiQg'):
@@ -506,7 +506,7 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
                                              Parameter_file=keyword_parameters['Parameter_file'],
                                              Gruneisen=Gruneisen, Wavenumber_Reference=Wavenumber_Reference,
                                              Volume_Reference=Volume_Reference, LocGrd_Vol_FracStep=LocGrd_Vol_FracStep)
-            elif NumAnalysis_method == 'none':
+            elif NumAnalysis_method == 'Euler':
                 volume_gradient[i, 1], wavenumbers[i, 1:], volume = \
                     Ex.Call_Expansion(Method, 'local_gradient', Program, Coordinate_file, molecules_in_coord,
                                       Temperature=temperature[i], Pressure=Pressure,
@@ -675,7 +675,7 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
                                              Aniso_LocGrad_Type=Aniso_LocGrad_Type, Gruneisen=Gruneisen,
                                              Wavenumber_Reference=Wavenumber_Reference,
                                              Crystal_matrix_Reference=Crystal_matrix_Reference)
-            elif NumAnalysis_method == 'none':
+            elif NumAnalysis_method == 'Euler':
                 lattice_gradient[i, :, 1:4], wavenumbers[i, 1:] = \
                     Ex.Call_Expansion(Method, 'local_gradient', Program, Coordinate_file, molecules_in_coord,
                                       Temperature=temperature[i], Pressure=Pressure,

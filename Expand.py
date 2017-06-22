@@ -408,7 +408,7 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
         wavenumbers_plus = Wvn.Call_Wavenumbers(Method, Coordinate_file=coordinate_plus,
                                                 Parameter_file=keyword_parameters['Parameter_file'],
                                                 Program=Program)
-        wavenumbers_minus = Wvn.Call_Wavenumbers(Method, Coordinate_file=Coordinate_file,
+        wavenumbers_minus = Wvn.Call_Wavenumbers(Method, Coordinate_file=coordinate_minus,
                                                  Parameter_file=keyword_parameters['Parameter_file'],
                                                  Program=Program)
     else:
@@ -447,12 +447,6 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
                   ((volume*LocGrd_Vol_FracStep)**2)
 
     # Removing excess files
-    if Temperature == 0.1:
-        print "Saving extra gradient parameters"
-        test = np.load('extra_gradient.npy')
-        test = np.concatenate((test, np.array([[numerator, denominator]])), axis=0)
-        np.save('extra_gradient', test)
-
     os.system('rm '+coordinate_plus+' '+coordinate_minus)
     return -numerator/denominator, wavenumbers, volume
 
