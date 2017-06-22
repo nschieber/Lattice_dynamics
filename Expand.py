@@ -281,8 +281,8 @@ def Change_Crystal_Matrix(matrix_parameters_fraction_change, Program, Coordinate
     # This is for cases where the angles are ~90 degrees, it lets us fully test the gradient due to temperature.
     for i in range(3):
         for j in np.arange(i+1, 3):
-            if dcrystal_matrix[i, j] < 5*matrix_parameters_fraction_change:
-                dcrystal_matrix[i, j] = 5*matrix_parameters_fraction_change
+            if dcrystal_matrix[i, j] < matrix_parameters_fraction_change:
+                dcrystal_matrix[i, j] = matrix_parameters_fraction_change
     return dcrystal_matrix
     
 
