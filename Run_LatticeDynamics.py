@@ -224,7 +224,7 @@ if __name__ == '__main__':
     try:
         LocGrd_Vol_FracStep = subprocess.check_output("less " + str(args.Input_file) + " | grep LocGrd_Vol_FracStep"
                                                                                        " | grep = ", shell=True)
-        LocGrd_Vol_FracStep = LocGrd_Vol_FracStep.split('=')[1].strip()
+        LocGrd_Vol_FracStep = float(LocGrd_Vol_FracStep.split('=')[1].strip())
     except subprocess.CalledProcessError as grepexc:
         LocGrd_Vol_FracStep = 3e-02
 
@@ -232,14 +232,14 @@ if __name__ == '__main__':
         LocGrd_LatParam_FracStep = subprocess.check_output("less " + str(args.Input_file) + " | grep "
                                                                                             "LocGrd_LatParam_FracStep"
                                                                                             " | grep = ", shell=True)
-        LocGrd_LatParam_FracStep = LocGrd_LatParam_FracStep.split('=')[1].strip()
+        LocGrd_LatParam_FracStep = float(LocGrd_LatParam_FracStep.split('=')[1].strip())
     except subprocess.CalledProcessError as grepexc:
         LocGrd_LatParam_FracStep = 5e-02
 
     try:
         StepWise_Vol_StepFrac = subprocess.check_output("less " + str(args.Input_file) + " | grep StepWise_Vol_StepFrac"
                                                                                          " | grep = ", shell=True)
-        StepWise_Vol_StepFrac = StepWise_Vol_StepFrac.split('=')[1].strip()
+        StepWise_Vol_StepFrac = float(StepWise_Vol_StepFrac.split('=')[1].strip())
     except subprocess.CalledProcessError as grepexc:
         StepWise_Vol_StepFrac = 1.5e-03
 
@@ -247,7 +247,7 @@ if __name__ == '__main__':
         StepWise_Vol_LowerFrac = subprocess.check_output("less " + str(args.Input_file) + " | grep "
                                                                                           "StepWise_Vol_LowerFrac"
                                                                                           " | grep = ", shell=True)
-        StepWise_Vol_LowerFrac = StepWise_Vol_LowerFrac.split('=')[1].strip()
+        StepWise_Vol_LowerFrac = float(StepWise_Vol_LowerFrac.split('=')[1].strip())
     except subprocess.CalledProcessError as grepexc:
         StepWise_Vol_LowerFrac = 0.99
 
@@ -255,7 +255,7 @@ if __name__ == '__main__':
         StepWise_Vol_UpperFrac = subprocess.check_output("less " + str(args.Input_file) + " | grep "
                                                                                           "StepWise_Vol_UpperFrac"
                                                                                           " | grep = ", shell=True)
-        StepWise_Vol_UpperFrac = StepWise_Vol_UpperFrac.split('=')[1].strip()
+        StepWise_Vol_UpperFrac = float(StepWise_Vol_UpperFrac.split('=')[1].strip())
     except subprocess.CalledProcessError as grepexc:
         StepWise_Vol_UpperFrac = 1.02
 
@@ -263,7 +263,7 @@ if __name__ == '__main__':
         Gruneisen_Vol_FracStep = subprocess.check_output("less " + str(args.Input_file) + " | grep "
                                                                                           "Gruneisen_Vol_FracStep"
                                                                                           " | grep = ", shell=True)
-        Gruneisen_Vol_FracStep = Gruneisen_Vol_FracStep.split('=')[1].strip()
+        Gruneisen_Vol_FracStep = float(Gruneisen_Vol_FracStep.split('=')[1].strip())
     except subprocess.CalledProcessError as grepexc:
         Gruneisen_Vol_FracStep = 1.5e-03
 
@@ -277,14 +277,14 @@ if __name__ == '__main__':
     try:
         Gradient_MaxTemp = subprocess.check_output("less " + str(args.Input_file) + " | grep Gradient_MaxTemp"
                                                                                     " | grep = ", shell=True)
-        Gradient_MaxTemp = Gradient_MaxTemp.split('=')[1].strip()
+        Gradient_MaxTemp = float(Gradient_MaxTemp.split('=')[1].strip())
     except subprocess.CalledProcessError as grepexc:
         Gradient_MaxTemp = 300.
 
     try:
         Aniso_LocGrad_Type = subprocess.check_output("less " + str(args.Input_file) + " | grep Aniso_LocGrad_Type"
                                                                                       " | grep = ", shell=True)
-        Aniso_LocGrad_Type = Aniso_LocGrad_Type.split('=')[1].strip()
+        Aniso_LocGrad_Type = int(Aniso_LocGrad_Type.split('=')[1].strip())
     except subprocess.CalledProcessError as grepexc:
         Aniso_LocGrad_Type = 73
 
@@ -294,7 +294,6 @@ if __name__ == '__main__':
 #        Gruneisen_order = Gruneisen_order.split('=')[1].strip()
 #    except subprocess.CalledProcessError as grepexc:
 #        Gruneisen_order = 'First'
-
     Lattice_Dynamics(Temperature=Temperature,
                      Pressure=Pressure,
                      Method=Method,
