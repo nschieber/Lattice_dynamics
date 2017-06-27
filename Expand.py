@@ -9,7 +9,7 @@ import Wavenumbers as Wvn
 ##########################################
 #                 Input                  #
 ##########################################
-def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord, **keyword_parameters):
+def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord, min_RMS_gradient, **keyword_parameters):
     """
     :param Method: Harmonic approximation ('HA');
                    Stepwise Isotropic QHA ('SiQ');
@@ -53,11 +53,13 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
             dlattice_parameters = Isotropic_Change_Lattice_Parameters(keyword_parameters['volume_fraction_change'],
                                                                       Program, Coordinate_file)
             Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord,
-                             keyword_parameters['Output'],  Parameter_file=keyword_parameters['Parameter_file'],
+                             keyword_parameters['Output'], min_RMS_gradient, 
+                             Parameter_file=keyword_parameters['Parameter_file'],
                              dlattice_parameters=dlattice_parameters)
         elif (Method == 'GaQ') or (Method == 'GaQg'):
             Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord,
-                             keyword_parameters['Output'], Parameter_file=keyword_parameters['Parameter_file'],
+                             keyword_parameters['Output'], min_RMS_gradient,
+                             Parameter_file=keyword_parameters['Parameter_file'],
                              dcrystal_matrix=keyword_parameters['dcrystal_matrix'])
 
     # Fining the local gradient of expansion for inputted strucutre
@@ -67,7 +69,7 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
                 Isotropic_Local_Gradient(Coordinate_file, Program, keyword_parameters['Temperature'],
                                          keyword_parameters['Pressure'], keyword_parameters['volume_fraction_change'],
                                          molecules_in_coord,
-                                         keyword_parameters['Statistical_mechanics'], Method,
+                                         keyword_parameters['Statistical_mechanics'], Method, min_RMS_gradient,
                                          Parameter_file=keyword_parameters['Parameter_file'])
             return isotropic_local_gradient, wavenumbers, volume
         elif Method == 'GiQg':
@@ -75,7 +77,7 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
                 Isotropic_Local_Gradient(Coordinate_file, Program, keyword_parameters['Temperature'],
                                          keyword_parameters['Pressure'], keyword_parameters['volume_fraction_change'],
                                          molecules_in_coord,
-                                         keyword_parameters['Statistical_mechanics'], Method,
+                                         keyword_parameters['Statistical_mechanics'], Method, min_RMS_gradient,
                                          Parameter_file=keyword_parameters['Parameter_file'],
                                          Gruneisen=keyword_parameters['Gruneisen'],
                                          Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
@@ -88,7 +90,7 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
                                            keyword_parameters['matrix_parameters_fraction_change'],
                                            molecules_in_coord,
                                            keyword_parameters['Statistical_mechanics'], Method,
-                                           keyword_parameters['Aniso_LocGrad_Type'],
+                                           keyword_parameters['Aniso_LocGrad_Type'], min_RMS_gradient,
                                            Parameter_file=keyword_parameters['Parameter_file'])
             return anisotropic_local_gradient, wavenumbers
         elif Method == 'GaQg':
@@ -98,7 +100,7 @@ def Call_Expansion(Method, Purpose, Program, Coordinate_file, molecules_in_coord
                                            keyword_parameters['matrix_parameters_fraction_change'],
                                            molecules_in_coord,
                                            keyword_parameters['Statistical_mechanics'], Method,
-                                           keyword_parameters['Aniso_LocGrad_Type'],
+                                           keyword_parameters['Aniso_LocGrad_Type'], min_RMS_gradient,
                                            Parameter_file=keyword_parameters['Parameter_file'],
                                            Gruneisen=keyword_parameters['Gruneisen'],
                                            Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
@@ -123,7 +125,7 @@ def Return_Tinker_Coordinates(Coordinate_file):
     return coordinates
 
 
-def Output_Tinker_New_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output):
+def Output_Tinker_New_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output, min_RMS_gradient):
     """
     This function takes a new set of coordinates and utilizes a previous coordinate file as a template to produce a new
     Tinker .xyz crystal file
@@ -151,7 +153,7 @@ def Output_Tinker_New_Coordinate_File(Coordinate_file, Parameter_file, coordinat
     with open('%s_2' % Coordinate_file, 'w') as file_out:
         file_out.write(string_coordinates)
 
-    os.system('minimize %s_2 -k %s 0.01 &> /dev/null' % (Coordinate_file, Parameter_file))
+    os.system('minimize %s_2 -k %s %s &> /dev/null' % (Coordinate_file, Parameter_file, min_RMS_gradient))
     os.system('mv %s_3 %s.xyz' % (Coordinate_file, Output))
     os.system('rm %s_2' % Coordinate_file)
 
@@ -289,7 +291,7 @@ def Change_Crystal_Matrix(matrix_parameters_fraction_change, Program, Coordinate
 ##########################################
 #            General Expansion           #
 ##########################################
-def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coord, Output, **keyword_parameters):
+def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coord, Output, min_RMS_gradient, **keyword_parameters):
     """
     This function expands a coordinate file either based off of an inputted change in lattice vectors or crystal 
         lattice matrix
@@ -350,13 +352,13 @@ def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coor
 
         if Program == 'Tinker':
             Output_Tinker_New_Coordinate_File(Coordinate_file, keyword_parameters['Parameter_file'], coordinates,
-                                              lattice_parameters, Output)
+                                              lattice_parameters, Output, min_RMS_gradient)
 
 ##########################################
 #       Local Gradient of Expansion      #
 ##########################################
 def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, LocGrd_Vol_FracStep,
-                             molecules_in_coord, Statistical_mechanics, Method,**keyword_parameters):
+                             molecules_in_coord, Statistical_mechanics, Method, min_RMS_gradient, **keyword_parameters):
     """
     This function calculates the local gradient of isotropic expansion for a given coordinate file
     
@@ -392,9 +394,9 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
     dlattice_parameters = Isotropic_Change_Lattice_Parameters(1 + LocGrd_Vol_FracStep, Program, Coordinate_file)
 
     # Building the isotropically expanded and compressed strucutres
-    Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'plus',
+    Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'plus', min_RMS_gradient,
                      dlattice_parameters=dlattice_parameters, Parameter_file=keyword_parameters['Parameter_file'])
-    Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'minus',
+    Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'minus', min_RMS_gradient,
                      dlattice_parameters=-1*dlattice_parameters, Parameter_file=keyword_parameters['Parameter_file'])
 
     # Determining the volume of Coordinate_file
@@ -402,25 +404,25 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
 
     # Calculating wavenumbers coordinate_file, plus.*, and minus.*
     if Method == 'GiQ':
-        wavenumbers = Wvn.Call_Wavenumbers(Method, Coordinate_file=Coordinate_file,
+        wavenumbers = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Coordinate_file=Coordinate_file,
                                            Parameter_file=keyword_parameters['Parameter_file'],
                                            Program=Program)
-        wavenumbers_plus = Wvn.Call_Wavenumbers(Method, Coordinate_file=coordinate_plus,
+        wavenumbers_plus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Coordinate_file=coordinate_plus,
                                                 Parameter_file=keyword_parameters['Parameter_file'],
                                                 Program=Program)
-        wavenumbers_minus = Wvn.Call_Wavenumbers(Method, Coordinate_file=coordinate_minus,
+        wavenumbers_minus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Coordinate_file=coordinate_minus,
                                                  Parameter_file=keyword_parameters['Parameter_file'],
                                                  Program=Program)
     else:
-        wavenumbers = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+        wavenumbers = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],
                                            Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
                                            Volume_Reference=keyword_parameters['Volume_Reference'],
                                            New_Volume=volume)
-        wavenumbers_plus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+        wavenumbers_plus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],
                                                 Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
                                                 Volume_Reference=keyword_parameters['Volume_Reference'],
                                                 New_Volume=volume + volume*LocGrd_Vol_FracStep)
-        wavenumbers_minus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+        wavenumbers_minus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],
                                                  Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
                                                  Volume_Reference=keyword_parameters['Volume_Reference'],
                                                  New_Volume=volume - volume*LocGrd_Vol_FracStep)
@@ -454,7 +456,7 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
 
 def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, LocGrd_LatParam_FracStep,
                                molecules_in_coord, Statistical_mechanics, Method,
-                               Hessian_number, **keyword_parameters):
+                               Hessian_number, min_RMS_gradient, **keyword_parameters):
     """
     This function calculates the local gradient of anisotropic expansion for a given coordinate file
     
@@ -533,7 +535,7 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
             crystal_matrix = Lattice_parameters_to_Crystal_matrix(Pr.Tinker_Lattice_Parameters(Coordinate_file))
         elif Program == 'Test':
             crystal_matrix = Lattice_parameters_to_Crystal_matrix(Pr.Test_Lattice_Parameters(Coordinate_file))
-        wavenumbers = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+        wavenumbers = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],
                                            Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
                                            Crystal_matrix_Reference=keyword_parameters['Crystal_matrix_Reference'],
                                            New_Crystal_matrix=crystal_matrix)
@@ -550,24 +552,24 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
         dcrystal_matrix[matrix_order[i, 0], matrix_order[i, 1]] = lattice_stepsize
 
         # Finding the structures by increasing and decreasing the lattice parameter
-        Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord, 'p',
+        Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord, 'p', min_RMS_gradient,
                          dcrystal_matrix=dcrystal_matrix, Parameter_file=keyword_parameters['Parameter_file'])
-        Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord, 'm',
+        Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord, 'm', min_RMS_gradient,
                          dcrystal_matrix=-1*dcrystal_matrix, Parameter_file=keyword_parameters['Parameter_file'])
 
         # Calculating the wavenumbers for the additional strucutre
         if Method == 'GaQ':
-            wavenumbers_plus = Wvn.Call_Wavenumbers(Method, Coordinate_file='p'+file_ending, Program=Program,
+            wavenumbers_plus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Coordinate_file='p'+file_ending, Program=Program,
                                                     Parameter_file=keyword_parameters['Parameter_file'])
-            wavenumbers_minus = Wvn.Call_Wavenumbers(Method, Coordinate_file='m'+file_ending, Program=Program,
+            wavenumbers_minus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Coordinate_file='m'+file_ending, Program=Program,
                                                      Parameter_file=keyword_parameters['Parameter_file'])
         elif Method == 'GaQg':
-            wavenumbers_plus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+            wavenumbers_plus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],
                                                     Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
                                                     Crystal_matrix_Reference=
                                                     keyword_parameters['Crystal_matrix_Reference'],
                                                     New_Crystal_matrix=crystal_matrix + dcrystal_matrix)
-            wavenumbers_minus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+            wavenumbers_minus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],
                                                      Wavenumber_Reference=keyword_parameters['Wavenumber_Reference'],
                                                      Crystal_matrix_Reference=
                                                      keyword_parameters['Crystal_matrix_Reference'],
@@ -595,54 +597,54 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
                 dcrystal_matrix_2[matrix_order[j, 0], matrix_order[j, 1]] = lattice_stepsize_2
 
                 # Expanding the structures along a different crystal matrix parameter
-                Expand_Structure('p'+file_ending, Program, 'crystal_matrix', molecules_in_coord, 'pp',
+                Expand_Structure('p'+file_ending, Program, 'crystal_matrix', molecules_in_coord, 'pp', min_RMS_gradient,
                                  dcrystal_matrix=dcrystal_matrix_2, Parameter_file=keyword_parameters['Parameter_file'])
-                Expand_Structure('p'+file_ending, Program, 'crystal_matrix', molecules_in_coord, 'pm',
+                Expand_Structure('p'+file_ending, Program, 'crystal_matrix', molecules_in_coord, 'pm', min_RMS_gradient,
                                  dcrystal_matrix=-1*dcrystal_matrix_2,
                                  Parameter_file=keyword_parameters['Parameter_file'])
-                Expand_Structure('m'+file_ending, Program, 'crystal_matrix', molecules_in_coord, 'mm',
+                Expand_Structure('m'+file_ending, Program, 'crystal_matrix', molecules_in_coord, 'mm', min_RMS_gradient,
                                  dcrystal_matrix=-1*dcrystal_matrix_2,
                                  Parameter_file=keyword_parameters['Parameter_file'])
-                Expand_Structure('m'+file_ending, Program, 'crystal_matrix', molecules_in_coord, 'mp',
+                Expand_Structure('m'+file_ending, Program, 'crystal_matrix', molecules_in_coord, 'mp', min_RMS_gradient,
                                  dcrystal_matrix=dcrystal_matrix_2, Parameter_file=keyword_parameters['Parameter_file'])
 
                 # Calculating the wavenumbers of the new strucuture
                 if Method == 'GaQ':
-                    wavenumbers_plus_plus = Wvn.Call_Wavenumbers(Method, Coordinate_file='pp' + file_ending, 
+                    wavenumbers_plus_plus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Coordinate_file='pp' + file_ending, 
                                                                  Program=Program, 
                                                                  Parameter_file=keyword_parameters['Parameter_file'])
-                    wavenumbers_plus_minus = Wvn.Call_Wavenumbers(Method, Coordinate_file='pm' + file_ending,
+                    wavenumbers_plus_minus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Coordinate_file='pm' + file_ending,
                                                                   Program=Program,
                                                                   Parameter_file=keyword_parameters['Parameter_file'])
-                    wavenumbers_minus_minus = Wvn.Call_Wavenumbers(Method, Coordinate_file='mm' + file_ending,
+                    wavenumbers_minus_minus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Coordinate_file='mm' + file_ending,
                                                                    Program=Program,
                                                                    Parameter_file=keyword_parameters['Parameter_file'])
-                    wavenumbers_minus_plus = Wvn.Call_Wavenumbers(Method, Coordinate_file='mp' + file_ending,
+                    wavenumbers_minus_plus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Coordinate_file='mp' + file_ending,
                                                                   Program=Program,
                                                                   Parameter_file=keyword_parameters['Parameter_file'])
                 elif Method == 'GaQg':
-                    wavenumbers_plus_plus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                    wavenumbers_plus_plus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],
                                                                  Wavenumber_Reference=
                                                                  keyword_parameters['Wavenumber_Reference'],
                                                                  Crystal_matrix_Reference=
                                                                  keyword_parameters['Crystal_matrix_Reference'],
                                                                  New_Crystal_matrix=
                                                                  crystal_matrix + dcrystal_matrix + dcrystal_matrix_2)
-                    wavenumbers_plus_minus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                    wavenumbers_plus_minus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],
                                                                   Wavenumber_Reference=
                                                                   keyword_parameters['Wavenumber_Reference'],
                                                                   Crystal_matrix_Reference=
                                                                   keyword_parameters['Crystal_matrix_Reference'],
                                                                   New_Crystal_matrix=
                                                                   crystal_matrix + dcrystal_matrix - dcrystal_matrix_2)
-                    wavenumbers_minus_minus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                    wavenumbers_minus_minus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],
                                                                    Wavenumber_Reference=
                                                                    keyword_parameters['Wavenumber_Reference'],
                                                                    Crystal_matrix_Reference=
                                                                    keyword_parameters['Crystal_matrix_Reference'],
                                                                    New_Crystal_matrix=
                                                                    crystal_matrix - dcrystal_matrix - dcrystal_matrix_2)
-                    wavenumbers_minus_plus = Wvn.Call_Wavenumbers(Method, Gruneisen=keyword_parameters['Gruneisen'],
+                    wavenumbers_minus_plus = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],
                                                                   Wavenumber_Reference=
                                                                   keyword_parameters['Wavenumber_Reference'],
                                                                   Crystal_matrix_Reference=

@@ -16,7 +16,7 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1., Me
                      LocGrd_LatParam_FracStep=5e-05, StepWise_Vol_StepFrac=1.5e-3,
                      StepWise_Vol_LowerFrac=0.97, StepWise_Vol_UpperFrac=1.16,
                      Statistical_mechanics='Classical', Gruneisen_Vol_FracStep=1.5e-3,
-                     Wavenum_Tol=-1., Gradient_MaxTemp=300.0, Aniso_LocGrad_Type='73'):
+                     Wavenum_Tol=-1., Gradient_MaxTemp=300.0, Aniso_LocGrad_Type='73', min_RMS_gradient=0.01):
 
     Temperature = np.array(Temperature).astype(float)
     if Method == 'HA':
@@ -27,7 +27,7 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1., Me
             print "   Importing wavenumbers from:" + Output + '_' + Method + '_WVN.npy'
         else:
             print "   Computing wavenumbers of coordinate file"
-            wavenumbers = Wvn.Call_Wavenumbers(Method, Program=Program, Coordinate_file=Coordinate_file,
+            wavenumbers = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Program=Program, Coordinate_file=Coordinate_file,
                                                Parameter_file=Parameter_file)
             np.save(Output + '_' + Method + '_WVN', wavenumbers)
 
@@ -64,7 +64,7 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1., Me
         properties = TNA.Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, Output, Method,
                                                       Gradient_MaxTemp, Pressure, LocGrd_Vol_FracStep,
                                                       Statistical_mechanics, NumAnalysis_step, NumAnalysis_method,
-                                                      Temperature,
+                                                      Temperature, min_RMS_gradient,
                                                       Parameter_file=Parameter_file,
                                                       Gruneisen_Vol_FracStep=Gruneisen_Vol_FracStep)
         print "   Saving user specified properties in indipendent files:"
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     try:
         NumAnalysis_step = subprocess.check_output("less " + str(args.Input_file) + " | grep NumAnalysis_step"
                                                                                     " | grep = ", shell=True)
-        NumAnalysis_step = NumAnalysis_step.split('=')[1].strip()
+        NumAnalysis_step = float(NumAnalysis_step.split('=')[1].strip())
     except subprocess.CalledProcessError as grepexc:
         NumAnalysis_step = 150.
         if Method in ['GiQ', 'GiQg', 'GaQ', 'GaQg']:
@@ -288,6 +288,13 @@ if __name__ == '__main__':
     except subprocess.CalledProcessError as grepexc:
         Aniso_LocGrad_Type = 73
 
+    try:
+        min_RMS_gradient =  subprocess.check_output("less " + str(args.Input_file) + " | grep min_RMS_gradient"
+                                                                                      " | grep = ", shell=True)
+        min_RMS_gradient = float(min_RMS_gradient.split('=')[1].strip())
+    except subprocess.CalledProcessError as grepexc:
+        min_RMS_gradient = 0.01
+
 #    try:
 #        Gruneisen_order = subprocess.check_output("less " + str(args.Input_file) + " | grep Gruneisen_order"
 #                                                                                   " | grep = ", shell=True)
@@ -314,5 +321,6 @@ if __name__ == '__main__':
                      Gruneisen_Vol_FracStep=Gruneisen_Vol_FracStep,
                      Wavenum_Tol=Wavenum_Tol,
                      Gradient_MaxTemp=Gradient_MaxTemp,
-                     Aniso_LocGrad_Type=Aniso_LocGrad_Type)
+                     Aniso_LocGrad_Type=Aniso_LocGrad_Type,
+                     min_RMS_gradient=min_RMS_gradient)
 #                     Gruneisen_order=args.Gruneisen_order)

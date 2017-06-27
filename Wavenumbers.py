@@ -11,7 +11,7 @@ import ThermodynamicProperties as Pr
 ##########################################
 #                 Input                  #
 ##########################################
-def Call_Wavenumbers(Method, **keyword_parameters):
+def Call_Wavenumbers(Method, min_RMS_gradient, **keyword_parameters):
     """
     This function helps to direct how the wavenumbers will be calculated and calls other functions to calculate and 
     return the wavenumbers
@@ -71,8 +71,8 @@ def Call_Wavenumbers(Method, **keyword_parameters):
                     Setup_Isotropic_Gruneisen(keyword_parameters['Coordinate_file'],
                                               keyword_parameters['Program'],
                                               keyword_parameters['Gruneisen_Vol_FracStep'],
-                                              keyword_parameters['molecules_in_coord'], Parameter_file=
-                                              keyword_parameters['Parameter_file'])
+                                              keyword_parameters['molecules_in_coord'], min_RMS_gradient,
+                                              Parameter_file=keyword_parameters['Parameter_file'])
                 print "   ... Saving reference wavenumbers and Gruneisen parameters to: " + \
                       keyword_parameters['Output'] + '_GRU_' + Method + '.npy'
                 np.save(keyword_parameters['Output'] + '_GRU_' + Method, Gruneisen)
@@ -189,7 +189,7 @@ def Test_Wavenumber(Coordinate_file, function='Test2'):
 ##########################################
 #               Gruneisen                #
 ##########################################
-def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, molecules_in_coord,
+def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, molecules_in_coord, min_RMS_gradient,
                               **keyword_parameters):
     """
     This function calculates the Isotropic Gruneisen parameters for a given coordinate file.
@@ -213,7 +213,7 @@ def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, 
     # Determining wavenumbers of lattice strucutre and expanded strucutre
     # Also, assigning a file ending name for the nex coordinate file (program dependent)
     if Program == 'Tinker':
-        Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp',
+        Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp', min_RMS_gradient,
                             dlattice_parameters=dLattice_Parameters,
                             Parameter_file=keyword_parameters['Parameter_file'])
         Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'])
@@ -221,7 +221,7 @@ def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, 
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
         file_ending = '.xyz'
     elif Program == 'Test':
-        Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp',
+        Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp', min_RMS_gradient,
                             dlattice_parameters=dLattice_Parameters)
         Wavenumber_Reference = Test_Wavenumber(Coordinate_file)
         Wavenumber_expand = Test_Wavenumber('temp.npy')
