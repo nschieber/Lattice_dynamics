@@ -138,10 +138,12 @@ if __name__ == '__main__':
                                                                                " | grep = ", shell=True)
         Temperature = np.array(Temperature.split('=')[1].strip().split(',')).astype(float)
     except subprocess.CalledProcessError as grepexc:
-        Temperature = [0.0, 25.0, 50.0, 75.0, 100.0]
         if Method in ['HA', 'SiQ', 'SiQg']:
+            Temperature = [0.0, 25.0, 50.0, 75.0, 100.0]
             print "No temperatures were selected, using default temperatures of:"
             print "   " + str(Temperature)
+        else:
+            Temperature = []
 
     try:
         Pressure = subprocess.check_output("less " + str(args.Input_file) + " | grep Pressure | grep = ", shell=True)
