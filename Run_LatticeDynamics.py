@@ -52,7 +52,8 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1., Me
         properties = TNA.Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac,
                                                       StepWise_Vol_UpperFrac, Coordinate_file, Program, Temperature,
                                                       Pressure, Output, Method, molecules_in_coord, Wavenum_Tol,
-                                                      Statistical_mechanics, Parameter_file=Parameter_file,
+                                                      Statistical_mechanics, min_RMS_gradient,
+                                                      Parameter_file=Parameter_file,
                                                       Gruneisen_Vol_FracStep=Gruneisen_Vol_FracStep)
         print "   Saving user specified properties in indipendent files:"
         Pr.Save_Properties(properties, properties_to_save, Output, Method, Statistical_mechanics)

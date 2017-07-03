@@ -264,7 +264,7 @@ def Spline_Intermediate_Points(Output, Method, Program, properties, Temperature,
 ##########################################
 def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, StepWise_Vol_UpperFrac, Coordinate_file,
                                  Program, Temperature, Pressure, Output, Method, molecules_in_coord, Wavenum_Tol,
-                                 Statistical_mechanics, **keyword_parameters):
+                                 Statistical_mechanics, min_RMS_gradient, **keyword_parameters):
     """
     This function performs stepwise isotropic QHA either with or without the gruneisen parameter
     :param StepWise_Vol_StepFrac: volumetric fraction step
