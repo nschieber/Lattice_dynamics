@@ -215,7 +215,7 @@ def Spline_Intermediate_Points(Output, Method, Program, properties, Temperature,
                     break
 
             if (Method == 'GiQ') or (Method == 'GiQg'):
-                volume_fraction_change = spline_points[i]/properties[lower_bound, 6]
+                volume_fraction_change = spline_points[i]/properties[i - 1, 6]
                 dcrystal_matrix = 0.
                 keyword_parameters['Crystal_matrix_Reference'] = 0.
                 if Method == 'GiQ':
@@ -232,12 +232,13 @@ def Spline_Intermediate_Points(Output, Method, Program, properties, Temperature,
                     keyword_parameters['Wavenumber_Reference'] = 0.
                     keyword_parameters['Crystal_matrix_Reference'] = 0.
 
-            Ex.Call_Expansion(Method, 'expand', Program, 'Cords/' + Output + '_' + Method + 'T' +
-                              str(properties[lower_bound, 0]) + file_ending, molecules_in_coord, min_RMS_gradient,
+#            Ex.Call_Expansion(Method, 'expand', Program, 'Cords/' + Output + '_' + Method + 'T' +
+#                              str(properties[lower_bound, 0]) + file_ending, molecules_in_coord, min_RMS_gradient,
+            Ex.Call_Expansion(Method, 'expand', Program, 'temp' + file_ending, molecules_in_coord, min_RMS_gradient,
                               Parameter_file=keyword_parameters['Parameter_file'],
                               volume_fraction_change=volume_fraction_change, dcrystal_matrix=dcrystal_matrix,
                               Output=Output + '_' + Method + 'T' + str(Temperature[i]))
-
+            os.system('cp ' + Output + '_' + Method + 'T' + str(Temperature[i]) + file_ending + ' temp' + file_ending)
             wavenumbers = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Program=Program,
                                                Coordinate_file=Output + '_' + Method + 'T' + str(Temperature[i])
                                                                + file_ending,
@@ -256,6 +257,9 @@ def Spline_Intermediate_Points(Output, Method, Program, properties, Temperature,
                                                                                 keyword_parameters['Parameter_file']),
                                    axis=0)
             os.system('mv ' + Output + '_' + Method + 'T' + str(Temperature[i]) + file_ending + ' Cords/')
+        else:
+            os.system('cp Cords/' + Output + '_' + Method + 'T' + str(Temperature[i]) + file_ending + ' ./temp' + file_ending)
+    os.system('rm temp' + file_ending)
     return properties
 
 

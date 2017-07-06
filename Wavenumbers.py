@@ -341,9 +341,11 @@ def Tinker_Gru_organized_wavenumbers(Expansion_type, Coordinate_file, Expanded_C
     wavenumbers_out[0] = wavenumbers[0]
     for k in xrange(1, len(wavenumbers[:, 0])):
         weight = np.zeros((number_of_modes - 3, number_of_modes - 3))
+#        plot_diff = []
         for i in xrange(3, number_of_modes):
             diff = np.linalg.norm(np.dot(eigenvectors[0, i], eigenvectors[k, i]))/(np.linalg.norm(eigenvectors[0, i])*np.linalg.norm(eigenvectors[k, i]))
-            if diff > 0.7:
+#            plot_diff.append(diff)
+            if diff > 0.85:
                 weight[i - 3] = 10000000.
                 weight[i - 3, i - 3] = 1. - diff
             else:
@@ -357,8 +359,18 @@ def Tinker_Gru_organized_wavenumbers(Expansion_type, Coordinate_file, Expanded_C
         z = z +3
 
     # Re-organizing the expanded wavenumbers
+#        plot_diff_new = []
         for i in z:
             wavenumbers_out[k, i[0]] = wavenumbers[k, i[1]]
+#            plot_diff_new.append(np.linalg.norm(np.dot(eigenvectors[0, i[0]], eigenvectors[k, i[1]]))/(np.linalg.norm(eigenvectors[0, i[0]])*np.linalg.norm(eigenvectors[k, i[1]])))
+    # Checking the re-arangement of wavenumbers
+#    import pylab as plt
+#    plt.hist(plot_diff, bins=50, color='r', alpha=0.5, label='Un-organized')
+#    plt.hist(plot_diff_new, bins=50, color='b', alpha=0.5, label='Organized')
+#    plt.ylabel('Count', fontsize=18)
+#    plt.xlabel('Projection Length', fontsize=18)
+#    plt.legend()
+#    plt.show()
     return wavenumbers_out
 
 
