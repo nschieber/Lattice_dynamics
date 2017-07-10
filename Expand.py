@@ -5,6 +5,7 @@ import itertools as it
 import numpy as np
 import ThermodynamicProperties as Pr
 import Wavenumbers as Wvn
+import subprocess
 
 ##########################################
 #                 Input                  #
@@ -137,6 +138,22 @@ def Output_Tinker_New_Coordinate_File(Coordinate_file, Parameter_file, coordinat
     coordinates = New coordinates in a 3x(number of atoms) matrix
     lattice_parameters = lattice parameters as an array ([a,b,c,alpha,beta,gamma])
     Output = file name of new .xyz file
+    """   
+    Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output)
+    Tinker_minimization(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output, min_RMS_gradient)
+
+
+def Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output):
+    """
+    This function takes a new set of coordinates and utilizes a previous coordinate file as a template to produce a new
+    Tinker .xyz crystal file
+
+    **Required Inputs
+    Coordinate_file = Tinker .xyz file for a crystal
+    Parameter_file = Tinker .key file with force field parameters
+    coordinates = New coordinates in a 3x(number of atoms) matrix
+    lattice_parameters = lattice parameters as an array ([a,b,c,alpha,beta,gamma])
+    Output = file name of new .xyz file
     """
     with open(Coordinate_file) as f:
         # Opening xyz coordinate file to expand
@@ -150,13 +167,26 @@ def Output_Tinker_New_Coordinate_File(Coordinate_file, Parameter_file, coordinat
             string_coordinates = string_coordinates + '    ' + coordinates_template[i, j]
         string_coordinates = string_coordinates + '\n'
 
-    with open('%s_2' % Coordinate_file, 'w') as file_out:
+    with open(Output + '.xyz', 'w') as file_out:
         file_out.write(string_coordinates)
 
-    os.system('minimize %s_2 -k %s %s &> /dev/null' % (Coordinate_file, Parameter_file, min_RMS_gradient))
-    os.system('mv %s_3 %s.xyz' % (Coordinate_file, Output))
-    os.system('rm %s_2' % Coordinate_file)
 
+def Tinker_minimization(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output, min_RMS_gradient):
+    run_min = True
+    count = 0
+    while run_min == True:
+        count = count + 1
+        output = subprocess.check_output(['minimize', Coordinate_file, '-k', Parameter_file, str(min_RMS_gradient)])
+        output = output.split('\n')
+        subprocess.call(['mv', Coordinate_file + '_2', Coordinate_file])
+        if output[-6] == ' LBFGS  --  Normal Termination due to SmallGrad':
+            run_min = False
+        elif count == 5:
+            run_min = False
+        else:
+            coordinates = Return_Tinker_Coordinates(Coordinate_file)
+            coordinates = coordinates + np.random.randint(0, 10, size=(len(coordinates), 3))*0.001
+            Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output)
 
 ##########################################
 #                  TEST                  #
