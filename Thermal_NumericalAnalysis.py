@@ -572,7 +572,7 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
 ##########################################
 def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, Output, Method, Gradient_MaxTemp,
                                   Pressure, LocGrd_LatParam_FracStep, Statistical_mechanics,
-                                  NumAnalysis_step, NumAnalysis_method, Aniso_LocGrad_Type, Temperature,
+                                  NumAnalysis_step, NumAnalysis_method, Aniso_LocGrad_Type, Temperature, min_RMS_gradient,
                                   **keyword_parameters):
     """
     This function calculated the anisotropic gradient for thermal expansion and returns the properties along that path

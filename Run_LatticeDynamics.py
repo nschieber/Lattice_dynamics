@@ -78,7 +78,7 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1., Me
                                                        Gradient_MaxTemp, Pressure, LocGrd_LatParam_FracStep,
                                                        Statistical_mechanics, NumAnalysis_step,
                                                        NumAnalysis_method, Aniso_LocGrad_Type, Temperature,
-                                                       Parameter_file=Parameter_file)
+                                                       min_RMS_gradient, Parameter_file=Parameter_file)
         print "   Saving user specified properties in indipendent files:"
         Pr.Save_Properties(properties, properties_to_save, Output, Method, Statistical_mechanics)
         print "Gradient Anisotropic Quasi-Harmonic Approximation is complete!"
