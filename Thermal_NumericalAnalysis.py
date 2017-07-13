@@ -513,12 +513,15 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
                                              Volume_Reference=Volume_Reference, LocGrd_Vol_FracStep=LocGrd_Vol_FracStep)
             elif NumAnalysis_method == 'Euler':
                 volume_gradient[i, 1], wavenumbers[i, 1:], volume = \
-                    Ex.Call_Expansion(Method, 'local_gradient', Program, Coordinate_file, molecules_in_coord, min_RMS_gradient,
+                    Ex.Call_Expansion(Method, 'local_gradient', Program, Output + '_' + Method + 'T' +
+                                      str(temperature[i]) + file_ending, molecules_in_coord, min_RMS_gradient,
                                       Temperature=temperature[i], Pressure=Pressure,
                                       volume_fraction_change=LocGrd_Vol_FracStep,
                                       Statistical_mechanics=Statistical_mechanics,
-                                      Parameter_file=keyword_parameters['Parameter_file'], Gruneisen=Gruneisen,
-                                      Wavenumber_Reference=Wavenumber_Reference, Volume_Reference=Volume_Reference)
+                                      Parameter_file=keyword_parameters['Parameter_file'],
+                                      Gruneisen=Gruneisen, Wavenumber_Reference=Wavenumber_Reference,
+                                      Volume_Reference=Volume_Reference)
+
                 volume_gradient[i, 2] = volume_gradient[i, 1]
 
         # Saving wavenumbers and local gradient information

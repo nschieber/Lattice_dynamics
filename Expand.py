@@ -140,8 +140,7 @@ def Output_Tinker_New_Coordinate_File(Coordinate_file, Parameter_file, coordinat
     Output = file name of new .xyz file
     """   
     Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output)
-    Tinker_minimization(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output, min_RMS_gradient)
-
+    Tinker_minimization(Parameter_file, lattice_parameters, Output, min_RMS_gradient)
 
 def Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output):
     """
@@ -171,22 +170,22 @@ def Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, l
         file_out.write(string_coordinates)
 
 
-def Tinker_minimization(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output, min_RMS_gradient):
+def Tinker_minimization(Parameter_file, lattice_parameters, Output, min_RMS_gradient):
     run_min = True
     count = 0
     while run_min == True:
         count = count + 1
-        output = subprocess.check_output(['minimize', Coordinate_file, '-k', Parameter_file, str(min_RMS_gradient)])
+        output = subprocess.check_output(['minimize', Output + '.xyz', '-k', Parameter_file, str(min_RMS_gradient)])
         output = output.split('\n')
-        subprocess.call(['mv', Coordinate_file + '_2', Coordinate_file])
+        subprocess.call(['mv', Output + '.xyz_2', Output + '.xyz'])
         if output[-6] == ' LBFGS  --  Normal Termination due to SmallGrad':
             run_min = False
         elif count == 5:
             run_min = False
         else:
-            coordinates = Return_Tinker_Coordinates(Coordinate_file)
+            coordinates = Return_Tinker_Coordinates(Output + '.xyz')
             coordinates = coordinates + np.random.randint(0, 10, size=(len(coordinates), 3))*0.001
-            Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output)
+            Ouput_Tinker_Coordinate_File(Output + '.xyz', Parameter_file, coordinates, lattice_parameters, Output)
 
 ##########################################
 #                  TEST                  #
@@ -431,7 +430,6 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
 
     # Determining the volume of Coordinate_file
     volume = Pr.Volume(Program=Program, Coordinate_file=Coordinate_file)
-
     # Calculating wavenumbers coordinate_file, plus.*, and minus.*
     if Method == 'GiQ':
         wavenumbers = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Coordinate_file=Coordinate_file,
