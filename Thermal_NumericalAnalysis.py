@@ -172,6 +172,8 @@ def Spline_Intermediate_Points(Output, Method, Program, properties, Temperature,
         file_ending = '.npy'
         keyword_parameters['Parameter_file'] = ''
 
+    Temperature = np.sort(np.unique(np.append(Temperature, properties[:,0])))
+
     # Setting step points and tangents/gradients at those points
     if (Method == 'GiQ') or (Method == 'GiQg'):
         spline_points = np.zeros(len(Temperature))

@@ -259,45 +259,56 @@ def Get_Iso_Gruneisen_Wavenumbers(Gruneisen, Wavenumber_Reference, Volume_Refere
     return wavenumbers
 
 
-def Setup_Anisotropic_Gruneisen(Coordinate_file, Program, Lattice_FracStep, molecules_in_coord, **keyword_parameters):
+def Setup_Anisotropic_Gruneisen(Coordinate_file, Program, Lattice_FracStep, molecules_in_coord, min_RMS_gradient, **keyword_parameters):
+    # Determining the changes in the crystal matrix
     dcrystal_matrix_hold = Ex.Change_Crystal_Matrix(Lattice_FracStep, Program, Coordinate_file)
+
+    # Setting the order in which the crystal matrix will be pulled from
     matrix_order = np.matrix([[0, 0], [1, 1], [2, 2], [0, 1], [0, 2], [1, 2]])
 
+#    for i in range(6):
+#        # Creating 6 expanded strucutures, each in one of the 6 lattice directions
+#        dcrystal_matrix = np.zeros((3, 3))
+#        dcrystal_matrix[matrix_order[i, 0], matrix_order[i, 1]] = dcrystal_matrix_hold[matrix_order[i, 0],
+#                                                                                       matrix_order[i, 1]]
+#
+#        Ex.Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord, 'temp_' + str(i), min_RMS_gradient,
+#                            dcrystal_matrix=dcrystal_matrix, Parameter_file=keyword_parameters['Parameter_file'])
+
     if Program == 'Tinker':
-        Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'])
+#        Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'])
+        expanded_coordinates = ['temp_0.xyz','temp_1.xyz','temp_2.xyz','temp_3.xyz','temp_4.xyz','temp_5.xyz']
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
+        Crystal_matrix_Reference = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters) 
+        Organized_wavenumbers = Tinker_Gru_organized_wavenumbers('Anisotropic', Coordinate_file, expanded_coordinates, keyword_parameters['Parameter_file'])
+        Wavenumber_Reference = Organized_wavenumbers[0]
+        Gruneisen = np.zeros((len(Wavenumber_Reference), 3, 3))
+        Wavenumber_expand = Organized_wavenumbers[1:]
+        for i in range(6):
+            lattice_parameters_expand = Pr.Tinker_Lattice_Parameters(expanded_coordinates[i])
+            Crystal_matrix_Reference_expand = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters_expand)
+            eta = (Crystal_matrix_Reference_expand - Crystal_matrix_Reference)[matrix_order[i, 0], matrix_order[i, 1]] \
+                / Crystal_matrix_Reference[matrix_order[i, 0], matrix_order[i, 1]]
+            Gruneisen[3:, matrix_order[i, 0], matrix_order[i, 1]] = -(np.log(Wavenumber_expand[i, 3:]) -
+                                                                      np.log(Wavenumber_Reference[3:])) / eta
+            os.system('rm ' + expanded_coordinates[i])
+
     elif Program == 'Test':
+        expanded_coordinates = ['temp_0.npy','temp_1.npy','temp_2.npy','temp_3.npy','temp_4.npy','temp_5.npy']
         Wavenumber_Reference = Test_Wavenumber(Coordinate_file)
+        Gruneisen = np.zeros((len(Wavenumber_Reference), 3, 3))
         lattice_parameters = Pr.Test_Lattice_Parameters(Coordinate_file)
         keyword_parameters['Parameter_file'] = ''
-    Gruneisen = np.zeros((len(Wavenumber_Reference), 3, 3))
-    Crystal_matrix_Reference = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters)
-
-    for i in range(6):
-        dcrystal_matrix = np.zeros((3, 3))
-        dcrystal_matrix[matrix_order[i, 0], matrix_order[i, 1]] = dcrystal_matrix_hold[matrix_order[i, 0],
-                                                                                       matrix_order[i, 1]]
-
-        Ex.Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord, 'temp_' + str(i),
-                            dcrystal_matrix=dcrystal_matrix, Parameter_file=keyword_parameters['Parameter_file'])
-
-    for i in range(6):
-        if Program == 'Tinker':
-            Wavenumber_expand = Tinker_Wavenumber('temp_' + str(i) + '.xyz', keyword_parameters['Parameter_file'])
-            lattice_parameters_expand = Pr.Tinker_Lattice_Parameters('temp_' + str(i) + '.xyz')
-        elif Program == 'Test':
-            Wavenumber_expand = Test_Wavenumber('temp_' + str(i) + '.npy')
-            lattice_parameters_expand = Pr.Test_Lattice_Parameters('temp_' + str(i) + '.npy')
-        Crystal_matrix_Reference_expand = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters_expand)
-
-        eta = (Crystal_matrix_Reference_expand - Crystal_matrix_Reference)[matrix_order[i, 0], matrix_order[i, 1]] \
-            / Crystal_matrix_Reference[matrix_order[i, 0], matrix_order[i, 1]]
-        Gruneisen[3:, matrix_order[i, 0], matrix_order[i, 1]] = -(np.log(Wavenumber_expand[3:]) -
-                                                                  np.log(Wavenumber_Reference[3:])) / eta
-        if Program == 'Tinker':
-            os.system('rm temp_' + str(i) + '.xyz')
-        elif Program == 'Test':
-            os.system('rm temp_' + str(i) + '.npy')
+        Crystal_matrix_Reference = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters)
+        for i in range(6):
+            Wavenumber_expand = Test_Wavenumber(expanded_coordinates[i])
+            lattice_parameters_expand = Pr.Test_Lattice_Parameters(expanded_coordinates[i])
+            Crystal_matrix_Reference_expand = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters_expand)
+            eta = (Crystal_matrix_Reference_expand - Crystal_matrix_Reference)[matrix_order[i, 0], matrix_order[i, 1]] \
+                / Crystal_matrix_Reference[matrix_order[i, 0], matrix_order[i, 1]]
+            Gruneisen[3:, matrix_order[i, 0], matrix_order[i, 1]] = -(np.log(Wavenumber_expand[3:]) -
+                                                                      np.log(Wavenumber_Reference[3:])) / eta
+            os.system('rm ' + expanded_coordinates[i])
     return Gruneisen, Wavenumber_Reference, Crystal_matrix_Reference
 
 
@@ -341,10 +352,8 @@ def Tinker_Gru_organized_wavenumbers(Expansion_type, Coordinate_file, Expanded_C
     wavenumbers_out[0] = wavenumbers[0]
     for k in xrange(1, len(wavenumbers[:, 0])):
         weight = np.zeros((number_of_modes - 3, number_of_modes - 3))
-#        plot_diff = []
         for i in xrange(3, number_of_modes):
             diff = np.linalg.norm(np.dot(eigenvectors[0, i], eigenvectors[k, i]))/(np.linalg.norm(eigenvectors[0, i])*np.linalg.norm(eigenvectors[k, i]))
-#            plot_diff.append(diff)
             if diff > 0.85:
                 weight[i - 3] = 10000000.
                 weight[i - 3, i - 3] = 1. - diff
@@ -359,18 +368,8 @@ def Tinker_Gru_organized_wavenumbers(Expansion_type, Coordinate_file, Expanded_C
         z = z +3
 
     # Re-organizing the expanded wavenumbers
-#        plot_diff_new = []
         for i in z:
             wavenumbers_out[k, i[0]] = wavenumbers[k, i[1]]
-#            plot_diff_new.append(np.linalg.norm(np.dot(eigenvectors[0, i[0]], eigenvectors[k, i[1]]))/(np.linalg.norm(eigenvectors[0, i[0]])*np.linalg.norm(eigenvectors[k, i[1]])))
-    # Checking the re-arangement of wavenumbers
-#    import pylab as plt
-#    plt.hist(plot_diff, bins=50, color='r', alpha=0.5, label='Un-organized')
-#    plt.hist(plot_diff_new, bins=50, color='b', alpha=0.5, label='Organized')
-#    plt.ylabel('Count', fontsize=18)
-#    plt.xlabel('Projection Length', fontsize=18)
-#    plt.legend()
-#    plt.show()
     return wavenumbers_out
 
 
