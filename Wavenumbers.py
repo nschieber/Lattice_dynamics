@@ -274,8 +274,8 @@ def Setup_Anisotropic_Gruneisen(Coordinate_file, Program, Lattice_FracStep, mole
 
         Ex.Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord, 'temp_' + str(i), min_RMS_gradient,
                             dcrystal_matrix=dcrystal_matrix, Parameter_file=keyword_parameters['Parameter_file'])
-
-   if Program == 'Tinker':
+        
+    if Program == 'Tinker':
         Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'])
         expanded_coordinates = ['temp_0.xyz','temp_1.xyz','temp_2.xyz','temp_3.xyz','temp_4.xyz','temp_5.xyz']
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
