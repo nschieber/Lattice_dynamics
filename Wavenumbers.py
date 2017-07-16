@@ -266,17 +266,17 @@ def Setup_Anisotropic_Gruneisen(Coordinate_file, Program, Lattice_FracStep, mole
     # Setting the order in which the crystal matrix will be pulled from
     matrix_order = np.matrix([[0, 0], [1, 1], [2, 2], [0, 1], [0, 2], [1, 2]])
 
-#    for i in range(6):
-#        # Creating 6 expanded strucutures, each in one of the 6 lattice directions
-#        dcrystal_matrix = np.zeros((3, 3))
-#        dcrystal_matrix[matrix_order[i, 0], matrix_order[i, 1]] = dcrystal_matrix_hold[matrix_order[i, 0],
-#                                                                                       matrix_order[i, 1]]
-#
-#        Ex.Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord, 'temp_' + str(i), min_RMS_gradient,
-#                            dcrystal_matrix=dcrystal_matrix, Parameter_file=keyword_parameters['Parameter_file'])
+    for i in range(6):
+        # Creating 6 expanded strucutures, each in one of the 6 lattice directions
+        dcrystal_matrix = np.zeros((3, 3))
+        dcrystal_matrix[matrix_order[i, 0], matrix_order[i, 1]] = dcrystal_matrix_hold[matrix_order[i, 0],
+                                                                                       matrix_order[i, 1]]
 
-    if Program == 'Tinker':
-#        Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'])
+        Ex.Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord, 'temp_' + str(i), min_RMS_gradient,
+                            dcrystal_matrix=dcrystal_matrix, Parameter_file=keyword_parameters['Parameter_file'])
+
+   if Program == 'Tinker':
+        Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'])
         expanded_coordinates = ['temp_0.xyz','temp_1.xyz','temp_2.xyz','temp_3.xyz','temp_4.xyz','temp_5.xyz']
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
         Crystal_matrix_Reference = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters) 
