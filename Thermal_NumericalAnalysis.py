@@ -76,6 +76,7 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
 
     # Calculating the RK gradients for the overall numerical gradient
     for i in range(4):
+        print "   + Performing Runge-Kutta step " + str(i)
         if (Method == 'GiQ') or (Method == 'GiQg'):
             RK_grad[i], wavenumbers_hold, volume_hold = Ex.Call_Expansion(Method, 'local_gradient', Program,
                                                                           'RK4' + file_ending, molecules_in_coord,
@@ -537,6 +538,7 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
                                          molecules_in_coord, Parameter_file=keyword_parameters['Parameter_file'])
 
         # Expanding to the next strucutre
+        print "   Expanding to strucutre at: " + str(temperature[i + 1]) + " K"
         Ex.Call_Expansion(Method, 'expand', Program, Output + '_' + Method + 'T' + str(temperature[i]) + file_ending,
                           molecules_in_coord, min_RMS_gradient, Parameter_file=keyword_parameters['Parameter_file'],
                           volume_fraction_change=(volume + volume_gradient[i, 1]*NumAnalysis_step)/volume,
