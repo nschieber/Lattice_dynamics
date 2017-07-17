@@ -76,7 +76,7 @@ def Runge_Kutta_Fourth_Order(Method, Coordinate_file, Program, Temperature, Pres
 
     # Calculating the RK gradients for the overall numerical gradient
     for i in range(4):
-        print "   + Performing Runge-Kutta step " + str(i)
+        print "   + Performing Runge-Kutta step " + str(i + 1)
         if (Method == 'GiQ') or (Method == 'GiQg'):
             RK_grad[i], wavenumbers_hold, volume_hold = Ex.Call_Expansion(Method, 'local_gradient', Program,
                                                                           'RK4' + file_ending, molecules_in_coord,
