@@ -140,7 +140,7 @@ def Output_Tinker_New_Coordinate_File(Coordinate_file, Parameter_file, coordinat
     Output = file name of new .xyz file
     """   
     Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output)
-    Tinker_minimization(Parameter_file, lattice_parameters, Output, min_RMS_gradient)
+    Tinker_minimization(Parameter_file, Output + '.xyz', Output, min_RMS_gradient)
 
 def Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output):
     """
@@ -170,22 +170,38 @@ def Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, l
         file_out.write(string_coordinates)
 
 
-def Tinker_minimization(Parameter_file, lattice_parameters, Output, min_RMS_gradient):
+def Tinker_minimization(Parameter_file, Coordinate_file, Output, min_RMS_gradient):
+    with open('minimization.out', 'a') as myfile:
+        myfile.write("======================== New Minimization ========================\n")
     run_min = True
     count = 0
+    subprocess.call(['cp', Coordinate_file, 'Temp_min_0.xyz'])
     while run_min == True:
+        output = subprocess.check_output(['minimize', 'Temp_min_' + str(count) + '.xyz', '-k', Parameter_file, str(min_RMS_gradient)])
         count = count + 1
-        output = subprocess.check_output(['minimize', Output + '.xyz', '-k', Parameter_file, str(min_RMS_gradient)])
+        with open('minimization.out', 'a') as myfile:
+            myfile.write(output)
         output = output.split('\n')
-        subprocess.call(['mv', Output + '.xyz_2', Output + '.xyz'])
+        subprocess.call(['mv', 'Temp_min_' + str(count - 1) + '.xyz_2', 'Temp_min_' + str(count) + '.xyz'])
         if output[-6] == ' LBFGS  --  Normal Termination due to SmallGrad':
             run_min = False
-        elif count == 5:
+            subprocess.call(['mv', 'Temp_min_' + str(count) + '.xyz', Output + '.xyz'])
+        elif count == 10:
             run_min = False
+            subprocess.call(['mv', 'Temp_min_1.xyz', Output + '.xyz'])
+            print "      Could not minimize strucutre to tolerance after 10 runs"
+
         else:
-            coordinates = Return_Tinker_Coordinates(Output + '.xyz')
-            coordinates = coordinates + np.random.randint(0, 10, size=(len(coordinates), 3))*0.001
-            Ouput_Tinker_Coordinate_File(Output + '.xyz', Parameter_file, coordinates, lattice_parameters, Output)
+            if count = 1:
+                print "   ... Structure did not minimze to tolerance, shaking molecule and re-minimizing"
+            coordinates = Return_Tinker_Coordinates('Temp_min_' + str(count) + '.xyz')
+            coordinates = coordinates + np.random.randint(0, 10, size=(len(coordinates), 3))*min_RMS_gradient/100.
+            lattice_parameters = Pr.Tinker_Lattice_Parameters('Temp_min_' + str(count) + '.xyz')
+            Ouput_Tinker_Coordinate_File('Temp_min_' + str(count) + '.xyz', Parameter_file, coordinates, lattice_parameters, 'Temp_min_' + str(count))
+    for i in xrange(11):
+        if os.path.isfile('Temp_min_' + str(i) + '.xyz'):
+            subprocess.call(['rm', 'Temp_min_' + str(i) + '.xyz'])
+
 
 ##########################################
 #                  TEST                  #
@@ -458,6 +474,13 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
     # If temperature is zero, we assume that the local gradient is the same at 0.1K
     if Temperature == 0.:
         Temperature = 0.1
+
+    # Checking if wavenumbers are largely negative
+    if any(wavenumbers < -1.) or any(wavenumbers_plus < -1.) or any (wavenumbers_minus < -1.):
+        print "   ... Check wavenumbers:"
+        print "   ...... Wavenumbers:" + str(wavenumbers[:3])
+        print "   ...... Expanded:" + str(wavenumbers_plus[:3])
+        print "   ...... Compressed:" + str(wavenumbers_minus[:3])
 
     # Calculating the numerator of the local gradient -dS/dV
     numerator = -(Pr.Vibrational_Entropy(Temperature, wavenumbers_plus, Statistical_mechanics)/molecules_in_coord -
