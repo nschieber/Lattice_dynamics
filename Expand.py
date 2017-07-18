@@ -189,10 +189,10 @@ def Tinker_minimization(Parameter_file, Coordinate_file, Output, min_RMS_gradien
         elif count == 10:
             run_min = False
             subprocess.call(['mv', 'Temp_min_1.xyz', Output + '.xyz'])
-            print "      Could not minimize strucutre to tolerance after 10 runs"
-
+            print "      Could not minimize strucutre to tolerance after 10 shake cycles"
+            print "      Using strucutre from first minimzation"
         else:
-            if count = 1:
+            if count == 1:
                 print "   ... Structure did not minimze to tolerance, shaking molecule and re-minimizing"
             coordinates = Return_Tinker_Coordinates('Temp_min_' + str(count) + '.xyz')
             coordinates = coordinates + np.random.randint(0, 10, size=(len(coordinates), 3))*min_RMS_gradient/100.
