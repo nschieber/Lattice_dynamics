@@ -546,8 +546,6 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
     dG_U = np.zeros((6, 6))
     # Preparing the vector with each entry as d*G/du*dT
     dS_dU = np.zeros(6)
-    # For later reference, setting output vecotr size
-    out_vector_size = 6
 
     # Modified anisotropic Local Gradient
     if Hessian_number == 73:
@@ -559,9 +557,6 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
     elif Hessian_number == 19:
         diag_limit = 3
         off_diag_limit = 3
-        dG_U = np.zeros((3, 3))
-        dS_dU = np.zeros(3)
-        out_vector_size = 3
     elif Hessian_number == 13:
         diag_limit = 6
         off_diag_limit = 0
@@ -724,15 +719,9 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
         os.system('rm p' + file_ending + ' m' + file_ending)
 
     # Putting together the total matrix for the changes in lattice parameters with temperatures
-    dCrystal_Matrix = -1*np.dot(np.linalg.pinv(dG_U), dS_dU)
-
-    if out_vector_size == 6:
-        dCrystal_Matrix = np.matrix([[dCrystal_Matrix[0], dCrystal_Matrix[3], dCrystal_Matrix[4]],
-                                     [0., dCrystal_Matrix[1], dCrystal_Matrix[5]], 
-                                     [0., 0., dCrystal_Matrix[2]]])
-    if out_vector_size == 3:
-        dCrystal_Matrix = np.matrix([[dCrystal_Matrix[0], 0., 0.],
-                                     [0., dCrystal_Matrix[1], 0.],
-                                     [0., 0., dCrystal_Matrix[2]]])
+    dCrystal_Matrix = np.linalg.solve(-1.*dG_U, dS_dU)
+    dCrystal_Matrix = np.matrix([[dCrystal_Matrix[0], dCrystal_Matrix[3], dCrystal_Matrix[4]],
+                                 [0., dCrystal_Matrix[1], dCrystal_Matrix[5]], 
+                                 [0., 0., dCrystal_Matrix[2]]])
 
     return dCrystal_Matrix, wavenumbers
