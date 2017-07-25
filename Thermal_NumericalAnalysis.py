@@ -606,6 +606,7 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
     
     Optional Parameters
     Parameter_file: program specific file containing force field parameters
+    Gruneisen_Lat_FracStep
     """
     # Setting file endings and determining how many wavenumbers there will be
     if Program == 'Tinker':
@@ -639,7 +640,7 @@ def Ansotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, 
         Gruneisen, Wavenumber_Reference, Crystal_matrix_Reference = \
             Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Output=Output, Coordinate_file=Coordinate_file,
                                  Parameter_file=keyword_parameters['Parameter_file'], Program=Program,
-                                 molecules_in_coord=molecules_in_coord, Lattice_FracStep=LocGrd_LatParam_FracStep)
+                                 molecules_in_coord=molecules_in_coord, Gruneisen_Lat_FracStep=keyword_parameters['Gruneisen_Lat_FracStep'])
     elif Method == 'GaQ':
         Gruneisen = 0.
         Wavenumber_Reference = 0.

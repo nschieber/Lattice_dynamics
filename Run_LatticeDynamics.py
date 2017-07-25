@@ -15,7 +15,7 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1., Me
                      LocGrd_Vol_FracStep=3e-02,
                      LocGrd_LatParam_FracStep=5e-05, StepWise_Vol_StepFrac=1.5e-3,
                      StepWise_Vol_LowerFrac=0.97, StepWise_Vol_UpperFrac=1.16,
-                     Statistical_mechanics='Classical', Gruneisen_Vol_FracStep=1.5e-3,
+                     Statistical_mechanics='Classical', Gruneisen_Vol_FracStep=1.5e-3, Gruneisen_Lat_FracStep=1.0e-3,
                      Wavenum_Tol=-1., Gradient_MaxTemp=300.0, Aniso_LocGrad_Type='73', min_RMS_gradient=0.01):
 
     Temperature = np.array(Temperature).astype(float)
@@ -78,7 +78,7 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1., Me
                                                        Gradient_MaxTemp, Pressure, LocGrd_LatParam_FracStep,
                                                        Statistical_mechanics, NumAnalysis_step,
                                                        NumAnalysis_method, Aniso_LocGrad_Type, Temperature,
-                                                       min_RMS_gradient, Parameter_file=Parameter_file)
+                                                       min_RMS_gradient, Gruneisen_Lat_FracStep=Gruneisen_Lat_FracStep, Parameter_file=Parameter_file)
         print "   Saving user specified properties in indipendent files:"
         Pr.Save_Properties(properties, properties_to_save, Output, Method, Statistical_mechanics)
         print "Gradient Anisotropic Quasi-Harmonic Approximation is complete!"
@@ -271,6 +271,14 @@ if __name__ == '__main__':
         Gruneisen_Vol_FracStep = 1.5e-03
 
     try:
+        Gruneisen_Lat_FracStep = subprocess.check_output("less " + str(args.Input_file) + " | grep "
+                                                                                          "Gruneisen_Lat_FracStep"
+                                                                                          " | grep = ", shell=True)
+        Gruneisen_Lat_FracStep = float(Gruneisen_Lat_FracStep.split('=')[1].strip())
+    except subprocess.CalledProcessError as grepexc:
+        Gruneisen_Lat_FracStep = 1.5e-03
+
+    try:
         Wavenum_Tol = subprocess.check_output("less " + str(args.Input_file) + " | grep Wavenum_Tol"
                                                                                " | grep = ", shell=True)
         Wavenum_Tol = float(Wavenum_Tol.split('=')[1].strip())
@@ -322,6 +330,7 @@ if __name__ == '__main__':
                      StepWise_Vol_UpperFrac=StepWise_Vol_UpperFrac,
                      Statistical_mechanics=Statistical_mechanics,
                      Gruneisen_Vol_FracStep=Gruneisen_Vol_FracStep,
+                     Gruneisen_Lat_FracStep=Gruneisen_Lat_FracStep,
                      Wavenum_Tol=Wavenum_Tol,
                      Gradient_MaxTemp=Gradient_MaxTemp,
                      Aniso_LocGrad_Type=Aniso_LocGrad_Type,

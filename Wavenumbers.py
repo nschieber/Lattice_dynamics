@@ -41,7 +41,7 @@ def Call_Wavenumbers(Method, min_RMS_gradient, **keyword_parameters):
               'Test' for a test run
     Crystal_matrix_Reference
     New_Crystal_matrix
-    Lattice_FracStep
+    Gruneisen_Lat_FracStep
     """
     if (Method == 'SiQg') or (Method == 'GiQg'):
         # Methods that use the Gruneisen parameter
@@ -107,8 +107,9 @@ def Call_Wavenumbers(Method, min_RMS_gradient, **keyword_parameters):
             else:
                 Gruneisen, Wavenumber_Reference, Crystal_matrix_Reference = \
                     Setup_Anisotropic_Gruneisen(keyword_parameters['Coordinate_file'], keyword_parameters['Program'],
-                                                keyword_parameters['Lattice_FracStep'],
+                                                keyword_parameters['Gruneisen_Lat_FracStep'],
                                                 keyword_parameters['molecules_in_coord'],
+                                                min_RMS_gradient,
                                                 Parameter_file=keyword_parameters['Parameter_file'])
                 print "   ... Saving reference wavenumbers and Gruneisen parameters to: " + \
                       keyword_parameters['Output'] + '_GRU_/_GRUwvn' + Method + '.npy'
