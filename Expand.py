@@ -236,8 +236,10 @@ def Lattice_parameters_to_Crystal_matrix(lattice_parameters):
     Vxx = lattice_parameters[0]
     Vxy = lattice_parameters[1]*np.cos(np.radians(lattice_parameters[5]))
     Vxz = lattice_parameters[2]*np.cos(np.radians(lattice_parameters[4]))
+
     Vyy = lattice_parameters[1]*np.sin(np.radians(lattice_parameters[5]))
     Vyz = lattice_parameters[2]*np.cos(np.radians(lattice_parameters[3]))*np.sin(np.radians(lattice_parameters[5]))
+
     Vzz = np.sqrt(lattice_parameters[2]**2 - Vxz**2 - Vyz**2)
 
     # Combining the pieces of the matrix together
@@ -260,8 +262,7 @@ def Crystal_matrix_to_Lattice_parameters(crystal_matrix):
     c = np.sqrt(crystal_matrix[0, 2]**2 + crystal_matrix[1, 2]**2 + crystal_matrix[2, 2]**2)
     gamma = np.degrees(np.arccos(crystal_matrix[0, 1]/b))
     beta = np.degrees(np.arccos(crystal_matrix[0, 2]/c))
-    alpha = np.degrees(np.arccos(crystal_matrix[1, 2]*np.sin(np.radians(gamma))/c +
-                                 np.cos(np.radians(beta))*np.cos(np.radians(gamma))))
+    alpha = np.degrees(np.arccos(crystal_matrix[1, 2]/(c*np.sin(np.radians(gamma)))))
 
     # Assuring that the parameters returned are all positive
     if alpha < 0.0:
