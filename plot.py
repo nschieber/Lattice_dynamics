@@ -57,7 +57,7 @@ if (Gibbs[0] != '') and (len(Gibbs) == len(temperature)):
     temperature_reference = np.load(temperature[0])
     for i in np.arange(1, len(Gibbs)):
         if len(np.load(temperature[i])) == len(temperature_reference):
-            plt.plot(np.load(temperature[i]), np.load(Gibbs[i]) - Gibbs_reference, label = Labels[i])
+            plt.plot(np.load(temperature[i]), np.load(Gibbs[i]) - Gibbs_reference)#, label = Labels[i])
         else:
             temperature_hold = []
             dGibbs = []
