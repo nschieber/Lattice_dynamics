@@ -328,7 +328,6 @@ def Get_Aniso_Gruneisen_Wavenumbers(Gruneisen, Wavenumber_Reference, Crystal_mat
         wavenumbers[i] = Wavenumber_Reference[i] * np.exp(hold)
     return wavenumbers
 
-
 def Tinker_Gru_organized_wavenumbers(Expansion_type, Coordinate_file, Expanded_Coordinate_file, Parameter_file):
     from munkres import Munkres, print_matrix
     m = Munkres()
@@ -355,7 +354,7 @@ def Tinker_Gru_organized_wavenumbers(Expansion_type, Coordinate_file, Expanded_C
         weight = np.zeros((number_of_modes - 3, number_of_modes - 3))
         for i in xrange(3, number_of_modes):
             diff = np.linalg.norm(np.dot(eigenvectors[0, i], eigenvectors[k, i]))/(np.linalg.norm(eigenvectors[0, i])*np.linalg.norm(eigenvectors[k, i]))
-            if diff > 0.85:
+            if diff > 0.95:
                 weight[i - 3] = 10000000.
                 weight[i - 3, i - 3] = 1. - diff
             else:
