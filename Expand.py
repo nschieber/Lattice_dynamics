@@ -238,10 +238,9 @@ def Lattice_parameters_to_Crystal_matrix(lattice_parameters):
     Vxz = lattice_parameters[2]*np.cos(np.radians(lattice_parameters[4]))
 
     Vyy = lattice_parameters[1]*np.sin(np.radians(lattice_parameters[5]))
-    Vyz = lattice_parameters[2]*np.cos(np.radians(lattice_parameters[3]))*np.sin(np.radians(lattice_parameters[5]))
+    Vyz = lattice_parameters[2]*(np.cos(np.radians(lattice_parameters[3])) - np.cos(np.radians(lattice_parameters[4]))*np.cos(np.radians(lattice_parameters[5])))/np.sin(np.radians(lattice_parameters[5]))
 
     Vzz = np.sqrt(lattice_parameters[2]**2 - Vxz**2 - Vyz**2)
-
     # Combining the pieces of the matrix together
     crystal_matrix = np.matrix([[Vxx, Vxy, Vxz], [0., Vyy, Vyz], [0., 0., Vzz]])
     return crystal_matrix
@@ -262,7 +261,7 @@ def Crystal_matrix_to_Lattice_parameters(crystal_matrix):
     c = np.sqrt(crystal_matrix[0, 2]**2 + crystal_matrix[1, 2]**2 + crystal_matrix[2, 2]**2)
     gamma = np.degrees(np.arccos(crystal_matrix[0, 1]/b))
     beta = np.degrees(np.arccos(crystal_matrix[0, 2]/c))
-    alpha = np.degrees(np.arccos(crystal_matrix[1, 2]/(c*np.sin(np.radians(gamma)))))
+    alpha = np.degrees(np.arccos(crystal_matrix[1,2]*np.sin(np.radians(gamma))/c + np.cos(np.radians(beta))*np.cos(np.radians(gamma))))
 
     # Assuring that the parameters returned are all positive
     if alpha < 0.0:
@@ -547,7 +546,7 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
     dG_U = np.zeros((6, 6))
     # Preparing the vector with each entry as d*G/du*dT
     dS_dU = np.zeros(6)
-
+   
     # Modified anisotropic Local Gradient
     if Hessian_number == 73:
         diag_limit = 6
@@ -622,7 +621,7 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
                                                      keyword_parameters['Crystal_matrix_Reference'],
                                                      New_Crystal_matrix=crystal_matrix - dcrystal_matrix)
 
-        dS_dU[i] = -(Pr.Vibrational_Entropy(Temperature, wavenumbers_plus, Statistical_mechanics) / molecules_in_coord -
+        dS_dU[i] = (Pr.Vibrational_Entropy(Temperature, wavenumbers_plus, Statistical_mechanics) / molecules_in_coord -
                      Pr.Vibrational_Entropy(Temperature, wavenumbers_minus, Statistical_mechanics) /
                      molecules_in_coord) / (2 * lattice_stepsize)
 
@@ -720,9 +719,10 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
         os.system('rm p' + file_ending + ' m' + file_ending)
 
     # Putting together the total matrix for the changes in lattice parameters with temperatures
-    dCrystal_Matrix = np.linalg.solve(-1.*dG_U, dS_dU)
+    dCrystal_Matrix = np.linalg.solve(dG_U, dS_dU)
     dCrystal_Matrix = np.matrix([[dCrystal_Matrix[0], dCrystal_Matrix[3], dCrystal_Matrix[4]],
                                  [0., dCrystal_Matrix[1], dCrystal_Matrix[5]], 
                                  [0., 0., dCrystal_Matrix[2]]])
+
 
     return dCrystal_Matrix, wavenumbers
