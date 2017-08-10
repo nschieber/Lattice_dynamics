@@ -625,6 +625,17 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
                      Pr.Vibrational_Entropy(Temperature, wavenumbers_minus, Statistical_mechanics) /
                      molecules_in_coord) / (2 * lattice_stepsize)
 
+#        if np.absolute(dS_dU[i]) < 9.e-06:
+#            dS_dU[i] = 0.
+
+#        dG = (Pr.Gibbs_Free_Energy(Temperature, Pressure, Program, wavenumbers_plus, 'p'+file_ending,
+#                                           Statistical_mechanics, molecules_in_coord,
+#                                           Parameter_file=keyword_parameters['Parameter_file']) -
+#                      Pr.Gibbs_Free_Energy(Temperature, Pressure, Program, wavenumbers_minus, 'm'+file_ending,
+#                                           Statistical_mechanics, molecules_in_coord,
+#                                           Parameter_file=keyword_parameters['Parameter_file']))/(2*lattice_stepsize)
+
+#        if np.absolute(dG) > 9.e-06:
         dG_U[i, i] = (Pr.Gibbs_Free_Energy(Temperature, Pressure, Program, wavenumbers_plus, 'p'+file_ending,
                                            Statistical_mechanics, molecules_in_coord,
                                            Parameter_file=keyword_parameters['Parameter_file']) -
@@ -712,6 +723,9 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
                                                    file_ending, Statistical_mechanics, molecules_in_coord,
                                                    Parameter_file=keyword_parameters['Parameter_file']
                                                    ))/(4*lattice_stepsize*lattice_stepsize_2)
+#                if dG_U[i, j] < 9.e-06:
+#                    dG_U[i, j] = 0.
+
                 dG_U[j, i] = dG_U[i, j]
                 # Removing excess files
                 os.system('rm pm' + file_ending + ' mp' + file_ending + ' pp' + file_ending + ' mm' + file_ending)
@@ -720,6 +734,10 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
 
     # Putting together the total matrix for the changes in lattice parameters with temperatures
     dCrystal_Matrix = np.linalg.solve(dG_U, dS_dU)
+    for i in range(len(dCrystal_Matrix)):
+        if np.absolute(dCrystal_Matrix[i]) < 9e-05:
+            dCrystal_Matrix[i] = 0.
+
     dCrystal_Matrix = np.matrix([[dCrystal_Matrix[0], dCrystal_Matrix[3], dCrystal_Matrix[4]],
                                  [0., dCrystal_Matrix[1], dCrystal_Matrix[5]], 
                                  [0., 0., dCrystal_Matrix[2]]])
