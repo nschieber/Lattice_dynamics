@@ -733,7 +733,8 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
         os.system('rm p' + file_ending + ' m' + file_ending)
 
     # Putting together the total matrix for the changes in lattice parameters with temperatures
-    dCrystal_Matrix = np.linalg.solve(dG_U, dS_dU)
+#    dCrystal_Matrix = np.linalg.solve(dG_U, dS_dU)
+    dCrystal_Matrix = np.linalg.lstsq(dG_U, dS_dU)[0]
     for i in range(len(dCrystal_Matrix)):
         if np.absolute(dCrystal_Matrix[i]) < 9e-05:
             dCrystal_Matrix[i] = 0.
