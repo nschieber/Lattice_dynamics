@@ -8,7 +8,7 @@ import itertools as it
 ##########################################
 #           Export PROPERTIES            #
 ##########################################
-def Properties(Coordinate_file, wavenumbers, Temperature, Pressure, Program, Statistical_mechanics, molecules_in_coord,
+def Properties(Coordinate_file, wavenumbers, Temperature, Pressure, Program, Statistical_mechanics, molecules_in_coord, cp2kroot,
                **keyword_parameters):
     """
     Function to calculate all properties for a single temperature and pressure
@@ -27,7 +27,6 @@ def Properties(Coordinate_file, wavenumbers, Temperature, Pressure, Program, Sta
     **Optional Inputs
     Parameter_file = Optional input for program
     """
-
     properties = np.zeros(14)
     properties[0] = Temperature  # Temperature
     properties[1] = Pressure  # Pressure
@@ -35,6 +34,9 @@ def Properties(Coordinate_file, wavenumbers, Temperature, Pressure, Program, Sta
         properties[3] = Tinker_U(Coordinate_file, keyword_parameters['Parameter_file']) / molecules_in_coord
         # Potential energy
         properties[7:13] = Tinker_Lattice_Parameters(Coordinate_file)  # Lattice parameters
+    elif Program == 'CP2K':
+        properties[3] = CP2K_U(cp2kroot) / molecules_in_coord  # Potential energy
+        properties[7:13] = CP2K_Lattice_Parameters(Coordinate_file)  # Lattice parameters
     elif Program == 'Test':
         properties[3] = Test_U(Coordinate_file) / molecules_in_coord  # Potential energy
         properties[7:13] = Test_Lattice_Parameters(Coordinate_file)  # Lattice parameters
@@ -56,7 +58,7 @@ def Properties(Coordinate_file, wavenumbers, Temperature, Pressure, Program, Sta
 
 
 def Properties_with_Temperature(Coordinate_file, wavenumbers, Temperature, Pressure, Program, Statistical_mechanics,
-                                molecules_in_coord, **keyword_parameters):
+                                molecules_in_coord, cp2kroot, **keyword_parameters):
     """
     This function collects the properties for a specific coordinate file over a temperature range
 
@@ -78,11 +80,11 @@ def Properties_with_Temperature(Coordinate_file, wavenumbers, Temperature, Press
     for i in range(len(Temperature)):
         if 'Parameter_file' in keyword_parameters:
             properties[i, :] = Properties(Coordinate_file, wavenumbers, Temperature[i], Pressure, Program,
-                                          Statistical_mechanics, molecules_in_coord,
+                                          Statistical_mechanics, molecules_in_coord, cp2kroot,
                                           Parameter_file=keyword_parameters['Parameter_file'])
         else:
             properties[i, :] = Properties(Coordinate_file, wavenumbers, Temperature[i], Pressure, Program,
-                                          Statistical_mechanics, molecules_in_coord)
+                                          Statistical_mechanics, molecules_in_coord, cp2kroot)
     return properties
 
 
@@ -217,6 +219,41 @@ def Test_Lattice_Parameters(Coordinate_file):
     lattice_parameters = np.load(Coordinate_file)
     return lattice_parameters
 
+##########################################
+#                 CP2K                   #
+##########################################
+
+def CP2K_U(cp2kroot):
+    """
+    This function takes a set of lattice parameters in a .npy file and returns the potential energy
+    Random funcitons can be input here to run different tests and implimented new methods efficiently
+
+    **Required Inputs
+    Coordinate_file = File containing lattice parameters
+    """
+    l = open(cp2kroot+'-r-0.out')
+    lines = l.readlines()
+    for x in range(0,len(lines)):
+	if 'ENERGY| Total FORCE_EVAL ( QS ) energy (a.u.): ' in lines[x]:
+	    U = float(lines[x].split()[-1])*627.5
+	   
+    return U
+
+
+def CP2K_Lattice_Parameters(Coordinate_file):
+    """
+    This function extracts the lattice parameters from within the Tinker coordinate file 
+
+    **Required Inputs
+    Coordinate_file = Tinker .xyz file for crystal structure
+    """
+    with open('%s' % Coordinate_file, 'r') as l:
+	lines = l.readlines()
+        lattice_parameters = lines[1].split()[1:7]
+
+
+    return lattice_parameters
+
 
 ##########################################
 #           THERMO-PROPERTIES            #
@@ -292,8 +329,10 @@ def Quantum_Vibrational_A(Temperature, wavenumbers):
     Na = 6.022 * 10 ** 23  # Avogadro's number
     beta = 1 / (k * Temperature)
     wavenumbers = np.sort(wavenumbers)
+
     A = []
     for i in wavenumbers[3:]:  # Skipping translational modes
+	i = float(i)
         if i > 0:  # Skipping negative wavenumbers
             a = ((h * i * c * np.pi) + (1 / beta) * np.log(1 - np.exp(-beta * h * i * c * 2 * np.pi))) * Na / 1000
             A.append(a)
@@ -360,6 +399,7 @@ def Quantum_Vibrational_S(Temperature, wavenumbers):
     wavenumbers = np.sort(wavenumbers)
     S = []
     for i in wavenumbers[3:]:
+	i = float(i)
         if i > 0:
             s = (h * i * c * 2 * np.pi / (Temperature * (np.exp(beta * h * i * c * 2 * np.pi) - 1)) - k * np.log(
                 1 - np.exp(-beta * h * i * c * 2 * np.pi))) * Na / 1000

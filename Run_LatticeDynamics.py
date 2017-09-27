@@ -16,7 +16,7 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1., Me
                      LocGrd_LatParam_FracStep=5e-05, StepWise_Vol_StepFrac=1.5e-3,
                      StepWise_Vol_LowerFrac=0.97, StepWise_Vol_UpperFrac=1.16,
                      Statistical_mechanics='Classical', Gruneisen_Vol_FracStep=1.5e-3, Gruneisen_Lat_FracStep=1.0e-3,
-                     Wavenum_Tol=-1., Gradient_MaxTemp=300.0, Aniso_LocGrad_Type='73', min_RMS_gradient=0.01):
+                     Wavenum_Tol=-1., Gradient_MaxTemp=300.0, Aniso_LocGrad_Type='73', min_RMS_gradient=0.01, cp2kroot='BNZ_NMA_p3'):
 
     Temperature = np.array(Temperature).astype(float)
     if Method == 'HA':
@@ -28,14 +28,15 @@ def Lattice_Dynamics(Temperature=[0.0, 25.0, 50.0, 75.0, 100.0], Pressure=1., Me
         else:
             print "   Computing wavenumbers of coordinate file"
             wavenumbers = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Program=Program, Coordinate_file=Coordinate_file,
-                                               Parameter_file=Parameter_file)
+                                               Parameter_file=Parameter_file, cp2kroot=cp2kroot)
             np.save(Output + '_' + Method + '_WVN', wavenumbers)
 
-        if all(wavenumbers > Wavenum_Tol):
+
+        if all(i > Wavenum_Tol for i in wavenumbers):
             print "   All wavenumbers are greater than tolerance of: " + str(Wavenum_Tol) + " cm^-1"
             properties = Pr.Properties_with_Temperature(Coordinate_file, wavenumbers, Temperature, Pressure, Program,
-                                                        Statistical_mechanics, molecules_in_coord,
-                                                        Parameter_file=Parameter_file)
+                                                        Statistical_mechanics, molecules_in_coord, cp2kroot=cp2kroot,
+                                                        Parameter_file=Parameter_file )
             print "   All properties have been saved in " + Output + "_raw.npy"
             np.save(Output + '_raw', properties)
             print "   Saving user specified properties in indipendent files:"
@@ -110,7 +111,7 @@ if __name__ == '__main__':
     try:
         Program = subprocess.check_output("less " + str(args.Input_file) + " | grep Program | grep = ", shell=True)
         Program = Program.split('=')[1].strip()
-        if Program not in ['Tinker', 'Test']:
+        if Program not in ['Tinker', 'Test', 'CP2K']:
             print "Input program is not supported. Please select from the following:"
             print "   Tinker, Test"
             print "Exiting code"
@@ -306,6 +307,13 @@ if __name__ == '__main__':
     except subprocess.CalledProcessError as grepexc:
         min_RMS_gradient = 0.01
 
+    try:
+        cp2kroot =  subprocess.check_output("less " + str(args.Input_file) + " | grep cp2kroot"
+                                                                                      " | grep = ", shell=True)
+        cp2kroot = float(cp2kroot.split('=')[1].strip())
+    except subprocess.CalledProcessError as grepexc:
+        cp2kroot = 'BNZ_NMA_p2'
+
 #    try:
 #        Gruneisen_order = subprocess.check_output("less " + str(args.Input_file) + " | grep Gruneisen_order"
 #                                                                                   " | grep = ", shell=True)
@@ -334,5 +342,5 @@ if __name__ == '__main__':
                      Wavenum_Tol=Wavenum_Tol,
                      Gradient_MaxTemp=Gradient_MaxTemp,
                      Aniso_LocGrad_Type=Aniso_LocGrad_Type,
-                     min_RMS_gradient=min_RMS_gradient)
+                     min_RMS_gradient=min_RMS_gradient, cp2kroot=cp2kroot)
 #                     Gruneisen_order=args.Gruneisen_order)

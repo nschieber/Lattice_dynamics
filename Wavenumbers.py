@@ -121,6 +121,8 @@ def Call_Wavenumbers(Method, min_RMS_gradient, **keyword_parameters):
         # Directly computing the wavenumbers for a specific program, given a coordinate file
         if keyword_parameters['Program'] == 'Tinker':
             wavenumbers = Tinker_Wavenumber(keyword_parameters['Coordinate_file'], keyword_parameters['Parameter_file'])
+	elif keyword_parameters['Program'] == 'CP2K':
+	    wavenumbers = CP2K_Wavenumber(keyword_parameters['cp2kroot'])
         elif keyword_parameters['Program'] == 'Test':
             wavenumbers = Test_Wavenumber(keyword_parameters['Coordinate_file'])
         return wavenumbers
@@ -154,6 +156,24 @@ def Tinker_Wavenumber(Coordinate_file, Parameter_file):
     wavenumbers = np.sort(np.array(eigenvalues_and_wavenumbers_hold[len(eigenvalues_and_wavenumbers_hold)/2:]))
     return wavenumbers
 
+##########################################
+#                  CP2K                  #
+##########################################
+
+def CP2K_Wavenumber(cp2kroot):
+    wavenumbers = np.zeros((3,))
+    wavenumfile = open(cp2kroot+'-VIBRATIONS-1.mol','r')
+    lines = wavenumfile.readlines()
+    iter = 2
+    while '[FR-COORD]' not in lines[iter]:
+        wave = lines[iter].split()
+        wavenumbers = np.append(wavenumbers, float(wave[0]))
+	iter = iter+1
+
+    return wavenumbers
+
+	 
+    
 
 ##########################################
 #                  Test                  #
