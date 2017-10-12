@@ -102,6 +102,9 @@ def Call_Wavenumbers(Method, min_RMS_gradient, **keyword_parameters):
                 elif keyword_parameters['Program'] == 'Test':
                     Crystal_matrix_Reference = Ex.Lattice_parameters_to_Crystal_matrix(
                         Pr.Test_Lattice_Parameters(keyword_parameters['Coordinate_file']))
+		elif keyword_parameters['Program'] == 'CP2K':
+                    Crystal_matrix_Reference = Ex.Lattice_parameters_to_Crystal_matrix(
+                        Pr.CP2K_Lattice_Parameters(keyword_parameters['Coordinate_file']))
             # If the Gruneisen parameter has yet to be determined, here it will be calculated
             # It is assumed that the input Coordinate_file is the lattice minimum strucutre
             else:
@@ -160,7 +163,7 @@ def Tinker_Wavenumber(Coordinate_file, Parameter_file):
 #                  CP2K                  #
 ##########################################
 
-def CP2K_Wavenumber(cp2kroot):
+def CP2K_Wavenumber(coordinatefile, parameter_file, cp2kroot):
     wavenumbers = np.zeros((3,))
     wavenumfile = open(cp2kroot+'-VIBRATIONS-1.mol','r')
     lines = wavenumfile.readlines()
@@ -242,6 +245,15 @@ def Setup_Isotropic_Gruneisen(Coordinate_file, Program, Gruneisen_Vol_FracStep, 
         Wavenumber_expand = Organized_wavenumbers[1]
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
         file_ending = '.xyz'
+    if Program == 'CP2K':
+        Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp', min_RMS_gradient,
+                            dlattice_parameters=dLattice_Parameters,
+                            Parameter_file=keyword_parameters['Parameter_file'], cp2kroot = keyword_parameters['cp2kroot'])
+        Organized_wavenumbers = CP2K_Gru_organized_wavenumbers('Isotropic', Coordinate_file, 'temp.xyz', keyword_parameters['Parameter_file'])
+        Wavenumber_Reference = Organized_wavenumbers[0] 
+        Wavenumber_expand = Organized_wavenumbers[1]
+        lattice_parameters = Pr.CP2K_Lattice_Parameters(Coordinate_file)
+        file_ending = '.pdb'
     elif Program == 'Test':
         Ex.Expand_Structure(Coordinate_file, Program, 'lattice_parameters', molecules_in_coord, 'temp', min_RMS_gradient,
                             dlattice_parameters=dLattice_Parameters)
@@ -294,10 +306,10 @@ def Setup_Anisotropic_Gruneisen(Coordinate_file, Program, Lattice_FracStep, mole
                                                                                        matrix_order[i, 1]]
 
         Ex.Expand_Structure(Coordinate_file, Program, 'crystal_matrix', molecules_in_coord, 'temp_' + str(i), min_RMS_gradient,
-                            dcrystal_matrix=dcrystal_matrix, Parameter_file=keyword_parameters['Parameter_file'])
+                            dcrystal_matrix=dcrystal_matrix, Parameter_file=keyword_parameters['Parameter_file'], cp2kroot = keyword_parameters['cp2kroot'])
         
     if Program == 'Tinker':
-        Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'])
+        Wavenumber_Reference = Tinker_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'], keyword_parameters['cp2kroot'])
         expanded_coordinates = ['temp_0.xyz','temp_1.xyz','temp_2.xyz','temp_3.xyz','temp_4.xyz','temp_5.xyz']
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
         Crystal_matrix_Reference = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters) 
@@ -307,6 +319,24 @@ def Setup_Anisotropic_Gruneisen(Coordinate_file, Program, Lattice_FracStep, mole
         Wavenumber_expand = Organized_wavenumbers[1:]
         for i in range(6):
             lattice_parameters_expand = Pr.Tinker_Lattice_Parameters(expanded_coordinates[i])
+            Crystal_matrix_Reference_expand = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters_expand)
+            eta = (Crystal_matrix_Reference_expand - Crystal_matrix_Reference)[matrix_order[i, 0], matrix_order[i, 1]] \
+                / Crystal_matrix_Reference[matrix_order[i, 0], matrix_order[i, 1]]
+            Gruneisen[3:, matrix_order[i, 0], matrix_order[i, 1]] = -(np.log(Wavenumber_expand[i, 3:]) -
+                                                                      np.log(Wavenumber_Reference[3:])) / eta
+            os.system('rm ' + expanded_coordinates[i])
+
+    elif Program == 'CP2K':
+        Wavenumber_Reference = CP2K_Wavenumber(Coordinate_file, keyword_parameters['Parameter_file'], keyword_parameters['cp2kroot'])
+        expanded_coordinates = ['temp_0.pdb','temp_1.pdb','temp_2.pdb','temp_3.pdb','temp_4.pdb','temp_5.pdb']
+        lattice_parameters = Pr.CP2K_Lattice_Parameters(Coordinate_file)
+        Crystal_matrix_Reference = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters) 
+        Organized_wavenumbers = CP2K_Gru_organized_wavenumbers('Anisotropic', Coordinate_file, expanded_coordinates, keyword_parameters['Parameter_file'])
+        Wavenumber_Reference = Organized_wavenumbers[0]
+        Gruneisen = np.zeros((len(Wavenumber_Reference), 3, 3))
+        Wavenumber_expand = Organized_wavenumbers[1:]
+        for i in range(6):
+            lattice_parameters_expand = Pr.CP2K_Lattice_Parameters(expanded_coordinates[i])
             Crystal_matrix_Reference_expand = Ex.Lattice_parameters_to_Crystal_matrix(lattice_parameters_expand)
             eta = (Crystal_matrix_Reference_expand - Crystal_matrix_Reference)[matrix_order[i, 0], matrix_order[i, 1]] \
                 / Crystal_matrix_Reference[matrix_order[i, 0], matrix_order[i, 1]]
@@ -392,6 +422,50 @@ def Tinker_Gru_organized_wavenumbers(Expansion_type, Coordinate_file, Expanded_C
             wavenumbers_out[k, i[0]] = wavenumbers[k, i[1]]
     return wavenumbers_out
 
+def CP2K_Gru_organized_wavenumbers(Expansion_type, Coordinate_file, Expanded_Coordinate_file, Parameter_file):
+    from munkres import Munkres, print_matrix
+    m = Munkres()
+
+    number_of_modes = 3*Pr.CP2K_atoms_per_molecule(Coordinate_file, 1)
+
+    if Expansion_type == 'Isotropic':
+        wavenumbers = np.zeros((2, number_of_modes))
+        eigenvectors = np.zeros((2, number_of_modes, number_of_modes))
+        wavenumbers[0], eigenvectors[0] = CP2K_Wavenumber_and_Vectors(Coordinate_file, Parameter_file)
+        wavenumbers[1], eigenvectors[1] = CP2K_Wavenumber_and_Vectors(Expanded_Coordinate_file, Parameter_file)
+    elif Expansion_type == 'Anisotropic':
+        wavenumbers = np.zeros((7, number_of_modes))
+        eigenvectors = np.zeros((7, number_of_modes, number_of_modes))
+        wavenumbers[0], eigenvectors[0] = CP2K_Wavenumber_and_Vectors(Coordinate_file, Parameter_file)
+        for i in xrange(1,7):
+            wavenumbers[i], eigenvectors[i] = CP2K_Wavenumber_and_Vectors(Expanded_Coordinate_file[i-1], Parameter_file)
+
+
+    # Weighting the modes matched together
+    wavenumbers_out = np.zeros((len(wavenumbers[:, 0]), number_of_modes))
+    wavenumbers_out[0] = wavenumbers[0]
+    for k in xrange(1, len(wavenumbers[:, 0])):
+        weight = np.zeros((number_of_modes - 3, number_of_modes - 3))
+        for i in xrange(3, number_of_modes):
+            diff = np.linalg.norm(np.dot(eigenvectors[0, i], eigenvectors[k, i]))/(np.linalg.norm(eigenvectors[0, i])*np.linalg.norm(eigenvectors[k, i]))
+            if diff > 0.95:
+                weight[i - 3] = 10000000.
+                weight[i - 3, i - 3] = 1. - diff
+            else:
+                for j in xrange(3, number_of_modes):
+                    weight[i - 3, j - 3] = 1 - np.linalg.norm(np.dot(eigenvectors[0, i], eigenvectors[k, j]))/(np.linalg.norm(eigenvectors[0, i])*np.linalg.norm(eigenvectors[k, j]))
+
+        # Using the Hungarian algorithm to match wavenumbers
+        Wgt = m.compute(weight)
+        x,y = zip(*Wgt)
+        z = np.column_stack((x,y))
+        z = z +3
+
+    # Re-organizing the expanded wavenumbers
+        for i in z:
+            wavenumbers_out[k, i[0]] = wavenumbers[k, i[1]]
+    return wavenumbers_out
+
 
 def Tinker_Wavenumber_and_Vectors(Coordinate_file, Parameter_file):
     # Calling Tinker's vibrate executable and extracting the eigenvectors and wavenumbers of the respective
@@ -421,5 +495,33 @@ def Tinker_Wavenumber_and_Vectors(Coordinate_file, Parameter_file):
         eigenvectors[i] = output[start: finish] /np.sqrt(np.sum(output[start: finish]**2))
     return wavenumbers, eigenvectors
 
+
+def CP2K_Wavenumber_and_Vectors(Coordinate_file, Parameter_file):
+    # Calling Tinker's vibrate executable and extracting the eigenvectors and wavenumbers of the respective
+    # Hessian and mass-weighted Hessian
+    os.system('cp ' + Coordinate_file + ' vector_temp.xyz')
+    output = subprocess.check_output("vibrate vector_temp.xyz -k %s  A |  grep -oP '[-+]*[0-9]*\.[0-9]{2,9}'"
+                                                          % (Parameter_file), shell=True)
+
+    os.system('rm vector_temp.*')
+
+    # Finding the number modes in the system
+    number_of_modes = 3*Pr.Tinker_atoms_per_molecule(Coordinate_file, 1)
+
+    # Splitting the outputs into array form
+    output = output.split('\n')
+    output.remove('')
+    output = np.array(output).astype(float)
+
+    # Grabbing the wavenumbers
+    wavenumbers = np.array(output[number_of_modes: number_of_modes*2]).astype(float)
+
+    # Grabbing the eigenvectors
+    eigenvectors = np.zeros((number_of_modes, number_of_modes))
+    for i in range(number_of_modes):
+        start = number_of_modes*(i + 2) + i + 1
+        finish = start + number_of_modes
+        eigenvectors[i] = output[start: finish] /np.sqrt(np.sum(output[start: finish]**2))
+    return wavenumbers, eigenvectors
 
 

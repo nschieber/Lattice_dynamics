@@ -6,6 +6,7 @@ import numpy as np
 import ThermodynamicProperties as Pr
 import Wavenumbers as Wvn
 import subprocess
+import fileinput
 
 ##########################################
 #                 Input                  #
@@ -204,6 +205,107 @@ def Tinker_minimization(Parameter_file, Coordinate_file, Output, min_RMS_gradien
 
 
 ##########################################
+#       CP2K MOLECULAR MODELING        #
+##########################################
+def Return_CP2K_Coordinates(Coordinate_file):
+    """
+    This function opens a Tinker .xyz for a crystal and returns the 3x(number of atoms) matrix
+
+    **Required Inputs
+    Coordinate_file = Tinker .xyz file for a crystal
+    """
+    with open(Coordinate_file) as f:
+        # Opening xyz coordinate file to expand
+        coordinates = np.array(list(it.izip_longest(*[lines.split() for lines in f], fillvalue=' '))).T
+    coords = np.zeros((len(coordinates)-3,3))
+    coords[:,:] = coordinates[2:-1, 3:6].astype(float)
+    return coords
+
+
+def Output_CP2K_New_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output, min_RMS_gradient):
+    """
+    This function takes a new set of coordinates and utilizes a previous coordinate file as a template to produce a new
+    Tinker .xyz crystal file
+    The structure is also minimized
+
+    **Required Inputs
+    Coordinate_file = Tinker .xyz file for a crystal
+    Parameter_file = Tinker .key file with force field parameters
+    coordinates = New coordinates in a 3x(number of atoms) matrix
+    lattice_parameters = lattice parameters as an array ([a,b,c,alpha,beta,gamma])
+    Output = file name of new .xyz file
+    """   
+    Ouput_Tinker_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output)
+    CP2K_minimization(Parameter_file, Output + '.xyz', Output, min_RMS_gradient)
+
+def Ouput_CP2K_Coordinate_File(Coordinate_file, Parameter_file, coordinates, lattice_parameters, Output):
+    """
+    This function takes a new set of coordinates and utilizes a previous coordinate file as a template to produce a new
+    .pdb crystal file
+
+    **Required Inputs
+    Coordinate_file = Tinker .xyz file for a crystal
+    Parameter_file = Tinker .key file with force field parameters
+    coordinates = New coordinates in a 3x(number of atoms) matrix
+    lattice_parameters = lattice parameters as an array ([a,b,c,alpha,beta,gamma])
+    Output = file name of new .xyz file
+    """
+    xstr = []
+    numatoms = np.shape(coordinates)[0]
+    for d in range(3):                  
+        xstr.append("%9.3f" % (lattice_param[d]))
+    for d in range(3,6):                  
+        xstr.append("%7.2f" % (lattice_param[d]))
+    with open(Output + '.pdb', 'w') as file_out:
+        file_out.write('REMARK'+ '\n')
+        file_out.write('CRYST1    '+str(lattice_param[0])+xstr[1]+xstr[2]+xstr[3]+xstr[4]+xstr[5]+'\n')
+        for x in range(numatoms):
+
+            if (x+1) % 2 == 1:
+                ty = 'C'
+            else:
+                ty = 'H'
+            line =  '{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4s}{:1s}   {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}'.format('ATOM',x+1, ty,'','','','','',coordinates[x,0],coordinates[x,0],coordinates[x,0], 0.0,0.0,ty,'')
+            file_out.write(line+'\n')
+        file_out.write('END')
+
+
+def CP2K_minimization(Parameter_file, Coordinate_file, Output, min_RMS_gradient):
+    new_coord_file = 'Temp_min_0.pdb'
+    subprocess.call(['cp', Coordinate_file, new_coord_file])
+    new_param_file = 'Temp_min_0.inp'
+    subprocess.call(['cp', parameter_file, new_param_file])
+    #lattice_param = Pr.CP2K_Lattice_Parameters(Coordinate_file)
+    volume = '{:4.8s}'.format(str(lattice_param[0]*lattice_param[2]*lattice_param[1]))
+    
+    tempnamestr = 's/TEMPORARY/BNZ_VOL_'+volume+'/g'
+    subprocess.call(["sed", "-i", "-e",  tempnamestr, new_param_file])
+    
+    tempcoordstr = 's/TEMPCOORDFILE/'+new_coord_file+'/g'
+    subprocess.call(["sed", "-i", "-e",  tempcoordstr, new_param_file])
+    
+    tempalphastr = 's/ALPHA/{:4.5s}/g'.format(str(lattice_param[3]))
+    subprocess.call(["sed", "-i", "-e",  tempalphastr, new_param_file])
+    
+    tempbetastr = 's/BETA/{:4.5s}/g'.format(str(lattice_param[4]))
+    subprocess.call(["sed", "-i", "-e",  tempbetastr, new_param_file])
+
+    tempgammastr = 's/GAMMA/{:4.5s}/g'.format(str(lattice_param[5]))
+    subprocess.call(["sed", "-i", "-e",  tempgammastr, new_param_file])
+    
+    tempaaastr = 's/AAA/{:4.5s}/g'.format(str(lattice_param[0]))
+    subprocess.call(["sed", "-i", "-e",  tempaaastr, new_param_file])
+    
+    tempbbbstr = 's/BBB/{:4.5s}/g'.format(str(lattice_param[1]))
+    subprocess.call(["sed", "-i", "-e",  tempbbbstr, new_param_file])
+
+    tempcccstr = 's/CCC/{:4.5s}/g'.format(str(lattice_param[2]))
+    subprocess.call(["sed", "-i", "-e",  tempcccstr, new_param_file])
+    
+
+
+
+##########################################
 #                  TEST                  #
 ##########################################
 def Return_Test_Coordinates():
@@ -292,6 +394,8 @@ def Isotropic_Change_Lattice_Parameters(volume_fraction_change, Program, Coordin
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
     elif Program == 'Test':
         lattice_parameters = Pr.Test_Lattice_Parameters(Coordinate_file)
+    elif Program == 'CP2K':
+        lattice_parameters = Pr.CP2K_Lattice_Parameters(Coordinate_file)
 
     # Calculating the new isotropic lattice parameters
     dlattice_parameters = lattice_parameters*volume_fraction_change**(1/3.) - lattice_parameters
@@ -318,6 +422,8 @@ def Change_Crystal_Matrix(matrix_parameters_fraction_change, Program, Coordinate
         lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
     elif Program == 'Test':
         lattice_parameters = Pr.Test_Lattice_Parameters(Coordinate_file)
+    elif Program == 'CP2K':
+        lattice_parameters = Pr.CP2K_Lattice_Parameters(Coordinate_file)
 
     # Computing the crystal matrix of the coordinate file and determining the change in parameters based off of the
     # fractional input
@@ -369,6 +475,9 @@ def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coor
         if Program == 'Tinker':
             coordinates = Return_Tinker_Coordinates(Coordinate_file)
             lattice_parameters = Pr.Tinker_Lattice_Parameters(Coordinate_file)
+	elif Program == 'CP2K':
+	    coordinates = Return_CP2K_Coordinates(Coordinate_file)
+	    lattice_parameters = Pr.CP2K_Lattice_Parameters(Coordinate_file)
 
         crystal_matrix = Lattice_parameters_to_Crystal_matrix(lattice_parameters)
 
@@ -397,6 +506,9 @@ def Expand_Structure(Coordinate_file, Program, Expansion_type, molecules_in_coor
 
         if Program == 'Tinker':
             Output_Tinker_New_Coordinate_File(Coordinate_file, keyword_parameters['Parameter_file'], coordinates,
+                                              lattice_parameters, Output, min_RMS_gradient)
+        elif Program == 'cp2k':
+            Output_CP2K_New_Coordinate_File(Coordinate_file, keyword_parameters['Parameter_file'], coordinates,
                                               lattice_parameters, Output, min_RMS_gradient)
 
 ##########################################
@@ -433,6 +545,10 @@ def Isotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, Lo
     elif Program == 'Test':
         coordinate_plus = 'plus.npy'
         coordinate_minus = 'minus.npy'
+        keyword_parameters['Parameter_file'] = ''
+    elif Program == 'CP2K':
+        coordinate_plus = 'plus.pdb'
+        coordinate_minus = 'minus.pdb'
         keyword_parameters['Parameter_file'] = ''
 
     # Determining the change in lattice parameter for isotropic expansion
@@ -538,6 +654,8 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
     # Determining the file ending of the coordinate files
     if Program == 'Tinker':
         file_ending = '.xyz'
+    elif Program == 'CP2K':
+        file_ending = '.pdb'
     elif Program == 'Test':
         file_ending = '.npy'
         keyword_parameters['Parameter_file'] = ''
@@ -574,11 +692,15 @@ def Anisotropic_Local_Gradient(Coordinate_file, Program, Temperature, Pressure, 
     if Method == 'GaQ':
         if Program == 'Tinker':
             wavenumbers = Wvn.Tinker_Wavenumber(Coordinate_file, Parameter_file=keyword_parameters['Parameter_file'])
+        if Program == 'CP2K':
+            wavenumbers = Wvn.CP2K_Wavenumber(Coordinate_file, Parameter_file=keyword_parameters['Parameter_file'], cp2kroot = keyword_parameters['Parameter_file'])
         elif Program == 'Test':
             wavenumbers = Wvn.Test_Wavenumber(Coordinate_file)
     elif Method == 'GaQg':
         if Program == 'Tinker':
             crystal_matrix = Lattice_parameters_to_Crystal_matrix(Pr.Tinker_Lattice_Parameters(Coordinate_file))
+        if Program == 'CP2K':
+            crystal_matrix = Lattice_parameters_to_Crystal_matrix(Pr.CP2K_Lattice_Parameters(Coordinate_file))
         elif Program == 'Test':
             crystal_matrix = Lattice_parameters_to_Crystal_matrix(Pr.Test_Lattice_Parameters(Coordinate_file))
         wavenumbers = Wvn.Call_Wavenumbers(Method, min_RMS_gradient, Gruneisen=keyword_parameters['Gruneisen'],

@@ -254,6 +254,20 @@ def CP2K_Lattice_Parameters(Coordinate_file):
 
     return lattice_parameters
 
+def CP2K_atoms_per_molecule(Coordinate_file, molecules_in_coord):
+    """
+    This function determines the number of atoms per molecule
+
+    **Required Inputs
+    Coordinate_file = Tinker .xyz file for crystal structure
+    molecules_in_coord = number of molecules in Coordinate_file
+    """
+    with open('%s' % Coordinate_file, 'r') as l:
+        coordinates = [lines.split() for lines in l]
+        coordinates = np.array(list(it.izip_longest(*coordinates, fillvalue=' '))).T
+    atoms_per_molecule = int(coordinates[0, 0]) / molecules_in_coord
+    return atoms_per_molecule
+
 
 ##########################################
 #           THERMO-PROPERTIES            #
@@ -282,6 +296,9 @@ def Volume(**keyword_parameters):
         elif program == 'Test':
             # Retrieving lattice parameters of a test coordinate file
             lattice_parameters = Test_Lattice_Parameters(coordinate_file)
+        elif program == 'CP2K':
+            # Retrieving lattice parameters of a test coordinate file
+            lattice_parameters = CP2K_Lattice_Parameters(coordinate_file)
 
     V = lattice_parameters[0] * lattice_parameters[1] * lattice_parameters[2] * np.sqrt(
         1 - np.cos(np.radians(lattice_parameters[3])) ** 2 - np.cos(np.radians(lattice_parameters[4])) ** 2 - np.cos(
