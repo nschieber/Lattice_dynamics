@@ -310,7 +310,7 @@ if __name__ == '__main__':
     try:
         cp2kroot =  subprocess.check_output("less " + str(args.Input_file) + " | grep cp2kroot"
                                                                                       " | grep = ", shell=True)
-        cp2kroot = float(cp2kroot.split('=')[1].strip())
+        cp2kroot = (cp2kroot.split('=')[1].strip())
     except subprocess.CalledProcessError as grepexc:
         cp2kroot = 'BNZ_NMA_p2'
 

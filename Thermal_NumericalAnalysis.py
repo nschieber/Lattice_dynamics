@@ -303,6 +303,9 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
         file_ending = '.npy'
         number_of_wavenumbers = len(Wvn.Test_Wavenumber(Coordinate_file))
         keyword_parameters['Parameter_file'] = ''
+    elif Program =='CP2L':
+	file_ending = '.pdb'
+	number_of_wavenumbers = Pr.CP2K_atoms_per_molecule(Coordinate_file,1)*3
 
     # Setting up array of volume fractions from the lattice structure
     lower_volume_fraction = np.arange(StepWise_Vol_LowerFrac, 1.0, StepWise_Vol_StepFrac)[::-1]
@@ -328,7 +331,7 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
                                                                                      'Gruneisen_Vol_FracStep'],
                                                                                  molecules_in_coord=molecules_in_coord,
                                                                                  Parameter_file=
-                                                                                 keyword_parameters['Parameter_file'])
+                                                                                 keyword_parameters['Parameter_file'], cp2kroot=keyword_parameters['cp2kroot'])
     elif Method == 'SiQ':
         Gruneisen = 0.
         Wavenumber_Reference = 0.
@@ -373,7 +376,7 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
                                                       New_Volume=volume_fraction[i]*lattice_volume,
                                                       Coordinate_file=(Output + '_' + Method + str(volume_fraction[i])
                                                                        + file_ending),
-                                                      Parameter_file=keyword_parameters['Parameter_file'])
+                                                      Parameter_file=keyword_parameters['Parameter_file'], cp2kroot=keyword_parameters(['cp2kroot']))
 
         # Saving the wavenumbers if the Gruneisen parameter is not being used
         if Method == 'SiQ':
@@ -386,7 +389,7 @@ def Isotropic_Stepwise_Expansion(StepWise_Vol_StepFrac, StepWise_Vol_LowerFrac, 
             properties[i, :, :] = Pr.Properties_with_Temperature(Output + '_' + Method + str(volume_fraction[i]) +
                                                                  file_ending, wavenumbers[i, 1:], Temperature, Pressure,
                                                                  Program, Statistical_mechanics, molecules_in_coord,
-                                                                 Parameter_file=keyword_parameters['Parameter_file'])
+                                                                 Parameter_file=keyword_parameters['Parameter_file'], cp2kroot = keyword_parameters(['cp2kroot']))
         else:
             print "   ... WARNING: wavenumbers are lower than tolerance of: " + str(Wavenum_Tol) + " cm^-1"
             print "      ... Properties will be bypassed for this paricular strucutre."
@@ -442,7 +445,9 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
         file_ending = '.npy'
         number_of_wavenumbers = len(Wvn.Test_Wavenumber(Coordinate_file))
         keyword_parameters['Parameter_file'] = ''
-
+    elif Program =='CP2K':
+        file_ending = '.pdb'
+        number_of_wavenumbers = PR.CP2K_atoms_per_molecule(Coordinate_file, 1)*3
     # Setting the temperature array
     temperature = np.arange(0, Gradient_MaxTemp + 1., NumAnalysis_step)
 
@@ -472,7 +477,7 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
                                                                                      'Gruneisen_Vol_FracStep'],
                                                                                  molecules_in_coord=molecules_in_coord,
                                                                                  Parameter_file=
-                                                                                 keyword_parameters['Parameter_file'])
+                                                                                 keyword_parameters['Parameter_file'], cp2kroot=keyword_parameters['cp2kroot'])
     elif Method == 'GiQ':
         Gruneisen = 0.
         Wavenumber_Reference = 0.
@@ -535,7 +540,7 @@ def Isotropic_Gradient_Expansion(Coordinate_file, Program, molecules_in_coord, O
         # Populating the properties for the current temperature
         properties[i, :] = Pr.Properties(Output + '_' + Method + 'T' + str(temperature[i]) + file_ending,
                                          wavenumbers[i, 1:], temperature[i], Pressure, Program, Statistical_mechanics,
-                                         molecules_in_coord, Parameter_file=keyword_parameters['Parameter_file'])
+                                         molecules_in_coord, Parameter_file=keyword_parameters['Parameter_file'], cp2kroot=keywor_parameters['cp2kroot'])
 
         # Expanding to the next strucutre
         print "   Expanding to strucutre at: " + str(temperature[i + 1]) + " K"

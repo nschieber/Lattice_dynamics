@@ -42,14 +42,14 @@ Statistical_mechanics = Quantum
 
 ## Structure
 # Coordinate file
-Coordinate_file = benzene_p3_4.pdb
+Coordinate_file = benzene_p1_4.pdb
 
 ## Molecular parameters
 # Input file for particular program
 Parameter_file = nma.inp
 
 ## Root for cp2k files
-cp2kroot = BNZ_NMA_p2
+cp2kroot = BNZ_NMA_p1
 
 ## Nuber of molecules
 #****I want to eventually replace this with a program specific code to look at connectivity

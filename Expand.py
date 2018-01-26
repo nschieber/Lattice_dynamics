@@ -301,6 +301,13 @@ def CP2K_minimization(Parameter_file, Coordinate_file, Output, min_RMS_gradient)
 
     tempcccstr = 's/CCC/{:4.5s}/g'.format(str(lattice_param[2]))
     subprocess.call(["sed", "-i", "-e",  tempcccstr, new_param_file])
+
+    temprunstr = 's/TEMPRUNTYPE/GEO_OPT/g'
+    subprocess.call(["sed", "-i", "-e",  temprunstr, new_param_file])
+
+
+    subprocess.call(['mpirun', '-np', '112', 'cp2k.popt', '-i', INPUTFILE, '>', OUTPUTNAME])
+
     
 
 
